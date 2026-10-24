@@ -58,4 +58,8 @@
     <string name="about">Tentang</string>
     <string name="version">Versi</string>
     <string name="sonicplayer_desc">Pemutar Audio Modern</string>
+    <string name="notification_channel_name">Pemutaran musik</string>
+    <string name="lyrics">Lirik</string>
+    <string name="lyrics_not_available">Lirik tidak tersedia untuk lagu ini.</string>
+    <string name="lyrics_unsynced">Lirik tidak tersinkron</string>
 </resources>

@@ -59,7 +59,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -222,11 +221,7 @@ private fun PlaylistCard(
         modifier = Modifier
             .pressScale(interaction)
             .clip(RoundedCornerShape(22.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(SurfaceElevatedDark, SurfaceDark, Ink)
-                )
-            )
+            .background(SurfaceDark)
             .border(1.dp, Gold.copy(alpha = 0.16f), RoundedCornerShape(22.dp))
             .clickable(interactionSource = interaction, indication = null, onClick = onClick)
             .padding(16.dp)
@@ -235,12 +230,7 @@ private fun PlaylistCard(
             Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .background(
-                        Brush.linearGradient(
-                            listOf(Gold.copy(alpha = 0.32f), Color(0xFF5A4610))
-                        ),
-                        RoundedCornerShape(17.dp)
-                    )
+                    .background(Color(0xFF4A390E), RoundedCornerShape(17.dp))
                     .border(1.dp, Gold.copy(alpha = 0.4f), RoundedCornerShape(17.dp)),
                 contentAlignment = Alignment.Center
             ) {
@@ -347,23 +337,13 @@ fun PlaylistDetailScreen(
                         Box(
                             modifier = Modifier
                                 .size(170.dp)
-                                .background(
-                                    Brush.radialGradient(
-                                        listOf(Gold.copy(alpha = 0.22f), Color.Transparent)
-                                    ),
-                                    CircleShape
-                                ),
+                                .background(Gold.copy(alpha = 0.06f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(140.dp)
-                                    .background(
-                                        Brush.linearGradient(
-                                            listOf(Gold.copy(alpha = 0.32f), Color(0xFF4B3A0D), Ink)
-                                        ),
-                                        RoundedCornerShape(30.dp)
-                                    )
+                                    .background(Color(0xFF2E250D), RoundedCornerShape(30.dp))
                                     .border(
                                         1.dp,
                                         Gold.copy(alpha = 0.4f),

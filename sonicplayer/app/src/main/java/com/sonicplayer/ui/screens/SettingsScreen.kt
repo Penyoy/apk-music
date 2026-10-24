@@ -38,7 +38,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
@@ -181,11 +180,7 @@ private fun AppHeaderCard() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(26.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFF251D0B), SurfaceDark, Ink)
-                )
-            )
+            .background(SurfaceDark)
             .border(1.dp, Gold.copy(alpha = 0.3f), RoundedCornerShape(26.dp))
             .padding(22.dp)
     ) {
@@ -193,12 +188,7 @@ private fun AppHeaderCard() {
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .size(120.dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(Gold.copy(alpha = 0.18f), Color.Transparent)
-                    ),
-                    CircleShape
-                )
+                .background(Gold.copy(alpha = 0.05f), CircleShape)
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             SonicLogo(size = 72.dp)

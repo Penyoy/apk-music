@@ -19,11 +19,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,13 +45,17 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Subject
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -61,11 +70,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -74,24 +80,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import com.sonicplayer.data.model.Lyrics
 import com.sonicplayer.data.model.PlaybackState
 import com.sonicplayer.data.model.Song
-import com.sonicplayer.repository.AudioRepository
 import com.sonicplayer.ui.components.AlbumArt
 import com.sonicplayer.ui.components.CreatePlaylistDialog
 import com.sonicplayer.ui.components.EmptyState
+import com.sonicplayer.ui.components.GoldDivider
 import com.sonicplayer.ui.components.PlayPauseIcon
 import com.sonicplayer.ui.components.PlaylistPickerDialog
-import com.sonicplayer.ui.components.PlayingIndicator
-import com.sonicplayer.ui.components.SonicLogo
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldGradient
 import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceDark
-import com.sonicplayer.ui.theme.SurfaceElevatedDark
 import com.sonicplayer.ui.theme.SurfaceHighDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
@@ -106,11 +107,17 @@ fun NowPlayingScreen(
     val playbackState by viewModel.playbackState.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
+    val lyrics by viewModel.currentLyrics.collectAsState()
     val song = playbackState.currentSong
 
     var showMenu by remember { mutableStateOf(false) }
     var showPlaylistPicker by remember { mutableStateOf(false) }
     var showCreatePlaylist by remember { mutableStateOf(false) }
+    var showLyrics by remember { mutableStateOf(false) }
+
+    LaunchedEffect(lyrics) {
+        if (lyrics == null) showLyrics = false
+    }
 
     if (song == null) {
         Box(
@@ -134,51 +141,21 @@ fun NowPlayingScreen(
         return
     }
 
-    val artwork = AudioRepository.getAlbumArtUri(song.albumId)
-    val context = LocalContext.current
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFF1A1408), Color(0xFF0C0A06), Ink)
-                )
-            )
+            .background(Ink)
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(artwork)
-                .crossfade(true)
-                .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { alpha = 0.12f }
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Ink.copy(alpha = 0.45f),
-                            Ink.copy(alpha = 0.72f),
-                            Ink
-                        )
-                    )
-                )
-        )
-
         Column(modifier = Modifier.fillMaxSize()) {
             NowPlayingTopBar(
                 song = song,
                 isFavorite = favoriteIds.contains(song.id),
+                hasLyrics = lyrics != null,
                 onBack = { navController.navigateUp() },
                 onToggleFavorite = { viewModel.toggleFavorite(song.id) },
+                onShowLyrics = { showLyrics = true },
                 onMore = { showMenu = true }
             )
 
@@ -329,14 +306,110 @@ fun NowPlayingScreen(
             }
         )
     }
+
+    val currentLyrics = lyrics
+    if (showLyrics && currentLyrics != null) {
+        LyricsSheet(
+            lyrics = currentLyrics,
+            positionMs = playbackState.position,
+            isPlaying = playbackState.isPlaying,
+            onDismiss = { showLyrics = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LyricsSheet(
+    lyrics: Lyrics,
+    positionMs: Long,
+    isPlaying: Boolean,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val listState = rememberLazyListState()
+    val activeIndex = if (lyrics.synced) lyrics.activeLineIndex(positionMs) else -1
+
+    LaunchedEffect(activeIndex) {
+        if (activeIndex >= 0 && activeIndex < lyrics.lines.size) {
+            listState.animateScrollToItem(activeIndex)
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = SurfaceDark,
+        scrimColor = Ink.copy(alpha = 0.72f),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(42.dp)
+                    .height(4.dp)
+                    .background(Gold.copy(alpha = 0.55f), CircleShape)
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 22.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Lirik",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = TextPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = if (lyrics.synced) "Tersinkron" else "Tidak tersinkron",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (lyrics.synced) Gold else TextTertiary
+                )
+            }
+            GoldDivider(modifier = Modifier.padding(horizontal = 22.dp))
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                itemsIndexed(lyrics.lines) { index, line ->
+                    val active = lyrics.synced && index == activeIndex
+                    Text(
+                        text = line.text.ifBlank { "♪" },
+                        style = if (active) {
+                            MaterialTheme.typography.titleMedium
+                        } else {
+                            MaterialTheme.typography.bodyLarge
+                        },
+                        color = if (active) Gold else TextSecondary,
+                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
 private fun NowPlayingTopBar(
     song: Song,
     isFavorite: Boolean,
+    hasLyrics: Boolean,
     onBack: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onShowLyrics: () -> Unit,
     onMore: () -> Unit
 ) {
     Row(
@@ -369,6 +442,15 @@ private fun NowPlayingTopBar(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+        }
+        if (hasLyrics) {
+            IconButton(onClick = onShowLyrics) {
+                Icon(
+                    imageVector = Icons.Filled.Subject,
+                    contentDescription = "Lirik",
+                    tint = Gold
+                )
+            }
         }
         IconButton(onClick = onToggleFavorite) {
             Icon(
@@ -418,30 +500,20 @@ private fun VinylArtwork(
         modifier = Modifier
             .size(size + 36.dp)
             .graphicsLayer { scaleX = if (isPlaying) glow else 1f; scaleY = if (isPlaying) glow else 1f }
-            .background(
-                Brush.radialGradient(
-                    listOf(Gold.copy(alpha = 0.16f), Color.Transparent)
-                ),
-                CircleShape
-            ),
+            .background(Gold.copy(alpha = 0.05f), CircleShape),
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
                 .size(size)
                 .graphicsLayer { rotationZ = rotation.value }
-                .background(
-                    Brush.radialGradient(
-                        listOf(Color(0xFF252118), Color(0xFF0A0A0A), Color.Black)
-                    ),
-                    CircleShape
-                )
+                .background(Color(0xFF14110C), CircleShape)
                 .border(1.5.dp, Gold.copy(alpha = 0.55f), CircleShape)
                 .padding(size * 0.14f),
             contentAlignment = Alignment.Center
         ) {
             AlbumArt(
-                artwork = AudioRepository.getAlbumArtUri(song.albumId),
+                artwork = song.artworkUri,
                 contentDescription = song.album,
                 modifier = Modifier.fillMaxSize(),
                 shape = CircleShape,
@@ -588,12 +660,7 @@ private fun NowPlayingControls(
             modifier = Modifier
                 .size(78.dp)
                 .graphicsLayer { scaleX = playScale; scaleY = playScale }
-                .background(
-                    Brush.radialGradient(
-                        listOf(Gold.copy(alpha = 0.23f), Color.Transparent)
-                    ),
-                    CircleShape
-                ),
+                .background(Gold.copy(alpha = 0.10f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             FilledIconButton(

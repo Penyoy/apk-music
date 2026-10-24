@@ -66,12 +66,14 @@ fun SonicPlayerTheme(
 
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = Ink.toArgb()
-            window.navigationBarColor = Ink.toArgb()
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = false
-                isAppearanceLightNavigationBars = false
+            val window = (view.context as? Activity)?.window
+            if (window != null) {
+                window.statusBarColor = Ink.toArgb()
+                window.navigationBarColor = Ink.toArgb()
+                WindowCompat.getInsetsController(window, view).apply {
+                    isAppearanceLightStatusBars = false
+                    isAppearanceLightNavigationBars = false
+                }
             }
         }
     }

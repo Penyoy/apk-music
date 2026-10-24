@@ -119,27 +119,29 @@ class PlaybackRepository @Inject constructor(
 
     private fun updatePlaybackState() {
         val controller = mediaController ?: return
-        val currentMediaItem = controller.currentMediaItem
+        val currentMediaItem = runCatching { controller.currentMediaItem }.getOrNull()
 
         scope.launch {
-            val currentSong = currentMediaItem?.mediaId?.toLongOrNull()?.let {
-                songDao.getSongById(it)
+            val currentSong = currentMediaItem?.mediaId?.toLongOrNull()?.let { songId ->
+                runCatching { songDao.getSongById(songId) }.getOrNull()
             }
 
-            _playbackState.update { state ->
-                state.copy(
-                    isPlaying = controller.isPlaying,
-                    currentSong = currentSong ?: if (currentMediaItem == null) null else state.currentSong,
-                    position = controller.currentPosition.coerceAtLeast(0),
-                    duration = controller.duration.coerceAtLeast(0),
-                    repeatMode = when (controller.repeatMode) {
-                        Player.REPEAT_MODE_ALL -> PlaybackState.REPEAT_MODE_ALL
-                        Player.REPEAT_MODE_ONE -> PlaybackState.REPEAT_MODE_ONE
-                        else -> PlaybackState.REPEAT_MODE_OFF
-                    },
-                    shuffleMode = controller.shuffleModeEnabled,
-                    isBuffering = controller.playbackState == Player.STATE_BUFFERING
-                )
+            runCatching {
+                _playbackState.update { state ->
+                    state.copy(
+                        isPlaying = controller.isPlaying,
+                        currentSong = currentSong ?: if (currentMediaItem == null) null else state.currentSong,
+                        position = controller.currentPosition.coerceAtLeast(0),
+                        duration = controller.duration.coerceAtLeast(0),
+                        repeatMode = when (controller.repeatMode) {
+                            Player.REPEAT_MODE_ALL -> PlaybackState.REPEAT_MODE_ALL
+                            Player.REPEAT_MODE_ONE -> PlaybackState.REPEAT_MODE_ONE
+                            else -> PlaybackState.REPEAT_MODE_OFF
+                        },
+                        shuffleMode = controller.shuffleModeEnabled,
+                        isBuffering = controller.playbackState == Player.STATE_BUFFERING
+                    )
+                }
             }
         }
     }
@@ -173,13 +175,15 @@ class PlaybackRepository @Inject constructor(
             queueDao.setQueue(songs.map { it.id }, startIndex)
             val controller = awaitController() ?: return@launch
 
-            controller.clearMediaItems()
-            songs.forEach { song ->
-                controller.addMediaItem(song.toMediaItem())
+            runCatching {
+                controller.clearMediaItems()
+                songs.forEach { song ->
+                    controller.addMediaItem(song.toMediaItem())
+                }
+                controller.seekToDefaultPosition(startIndex.coerceIn(0, songs.lastIndex))
+                controller.prepare()
+                controller.play()
             }
-            controller.seekToDefaultPosition(startIndex.coerceIn(0, songs.lastIndex))
-            controller.prepare()
-            controller.play()
         }
     }
 
@@ -192,7 +196,7 @@ class PlaybackRepository @Inject constructor(
                     .setTitle(displayTitle)
                     .setArtist(displayArtist)
                     .setAlbumTitle(displayAlbum)
-                    .setArtworkUri(AudioRepository.getAlbumArtUri(albumId))
+                    .setArtworkUri(artworkUri)
                     .build()
             )
             .build()
@@ -200,9 +204,21 @@ class PlaybackRepository @Inject constructor(
 
     fun playPause() {
         val controller = mediaController ?: return
-        if (controller.isPlaying) {
-            controller.pause()
-        } else {
+        runCatching {
+            if (controller.isPlaying) {
+                controller.pause()
+            } else {
+                if (controller.playbackState == Player.STATE_IDLE) {
+                    controller.prepare()
+                }
+                controller.play()
+            }
+        }
+    }
+
+    fun play() {
+        val controller = mediaController ?: return
+        runCatching {
             if (controller.playbackState == Player.STATE_IDLE) {
                 controller.prepare()
             }
@@ -210,63 +226,69 @@ class PlaybackRepository @Inject constructor(
         }
     }
 
-    fun play() {
-        val controller = mediaController ?: return
-        if (controller.playbackState == Player.STATE_IDLE) {
-            controller.prepare()
-        }
-        controller.play()
-    }
-
     fun pause() {
-        mediaController?.pause()
+        runCatching { mediaController?.pause() }
     }
 
     fun next() {
-        mediaController?.seekToNextMediaItem()
+        runCatching { mediaController?.seekToNextMediaItem() }
     }
 
     fun previous() {
-        mediaController?.seekToPreviousMediaItem()
+        runCatching { mediaController?.seekToPreviousMediaItem() }
     }
 
     fun seekTo(position: Long) {
-        mediaController?.seekTo(position)
-        _playbackState.update { it.copy(position = position.coerceAtLeast(0)) }
+        val controller = mediaController ?: return
+        val safePosition = position.coerceAtLeast(0L)
+        runCatching { controller.seekTo(safePosition) }
+        _playbackState.update { it.copy(position = safePosition) }
     }
 
     fun toggleRepeatMode() {
         val controller = mediaController ?: return
-        controller.repeatMode = when (controller.repeatMode) {
-            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-            Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_OFF
-            else -> Player.REPEAT_MODE_OFF
+        runCatching {
+            controller.repeatMode = when (controller.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_OFF
+                else -> Player.REPEAT_MODE_OFF
+            }
         }
         updatePlaybackState()
     }
 
     fun toggleShuffleMode() {
         val controller = mediaController ?: return
-        controller.shuffleModeEnabled = !controller.shuffleModeEnabled
+        runCatching { controller.shuffleModeEnabled = !controller.shuffleModeEnabled }
         updatePlaybackState()
     }
 
     fun setPlaybackSpeed(speed: Float) {
         val controller = mediaController ?: return
-        controller.playbackParameters = PlaybackParameters(speed, controller.playbackParameters.pitch)
+        runCatching {
+            controller.playbackParameters = PlaybackParameters(
+                speed.coerceIn(0.25f, 4f),
+                controller.playbackParameters.pitch
+            )
+        }
     }
 
     fun setPitch(pitch: Float) {
         val controller = mediaController ?: return
-        controller.playbackParameters = PlaybackParameters(controller.playbackParameters.speed, pitch)
+        runCatching {
+            controller.playbackParameters = PlaybackParameters(
+                controller.playbackParameters.speed,
+                pitch.coerceIn(0.5f, 2f)
+            )
+        }
     }
 
     fun addToQueue(song: Song) {
         scope.launch {
             queueDao.addToQueue(song.id)
             val controller = awaitController() ?: return@launch
-            controller.addMediaItem(song.toMediaItem())
+            runCatching { controller.addMediaItem(song.toMediaItem()) }
         }
     }
 
@@ -274,14 +296,17 @@ class PlaybackRepository @Inject constructor(
         scope.launch {
             queueDao.addNext(song.id)
             val controller = awaitController() ?: return@launch
-            val nextIndex = (controller.currentMediaItemIndex + 1)
-                .coerceIn(0, controller.mediaItemCount)
-            controller.addMediaItem(nextIndex, song.toMediaItem())
+            runCatching {
+                val nextIndex = (controller.currentMediaItemIndex + 1)
+                    .coerceIn(0, controller.mediaItemCount)
+                controller.addMediaItem(nextIndex, song.toMediaItem())
+            }
         }
     }
 
     fun release() {
-        scope.cancel()
-        MediaController.releaseFuture(controllerFuture)
+        runCatching { scope.cancel() }
+        runCatching { MediaController.releaseFuture(controllerFuture) }
+        mediaController = null
     }
 }

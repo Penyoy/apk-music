@@ -53,7 +53,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -70,7 +69,6 @@ import com.sonicplayer.ui.components.SongOptionsBottomSheet
 import com.sonicplayer.ui.components.SongRow
 import com.sonicplayer.ui.components.SurfacePill
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldGradient
 import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceDark
@@ -284,15 +282,7 @@ private fun CollectionHero(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 10.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        Color(0xFF211A0A),
-                        SurfaceDark,
-                        Ink
-                    )
-                )
-            )
+            .background(SurfaceDark)
             .border(1.dp, Gold.copy(alpha = 0.3f), RoundedCornerShape(28.dp))
     ) {
         // Decorative gold glow.
@@ -301,12 +291,7 @@ private fun CollectionHero(
                 .align(Alignment.TopEnd)
                 .padding(top = 18.dp, end = 18.dp)
                 .size(150.dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(Gold.copy(alpha = 0.18f), Color.Transparent)
-                    ),
-                    CircleShape
-                )
+                .background(Gold.copy(alpha = 0.05f), CircleShape)
         )
 
         Column(modifier = Modifier.padding(22.dp)) {

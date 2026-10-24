@@ -56,7 +56,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -71,14 +70,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.sonicplayer.R
 import com.sonicplayer.data.model.Song
-import com.sonicplayer.repository.AudioRepository
 import com.sonicplayer.ui.theme.BorderGold
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldGradient
 import com.sonicplayer.ui.theme.GoldLight
-import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceElevatedDark
+import com.sonicplayer.ui.theme.SurfaceVariantDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
 import com.sonicplayer.ui.theme.TextTertiary
@@ -96,13 +94,9 @@ fun SonicLogo(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(
-                Brush.radialGradient(
-                    listOf(Gold.copy(alpha = 0.28f), SurfaceElevatedDark, Ink)
-                )
-            )
+            .background(SurfaceElevatedDark)
             .then(
-                if (showBorder) Modifier.border(1.dp, GoldGradient, CircleShape)
+                if (showBorder) Modifier.border(1.dp, Gold, CircleShape)
                 else Modifier
             ),
         contentAlignment = Alignment.Center
@@ -178,11 +172,7 @@ fun GoldDivider(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(
-                Brush.horizontalGradient(
-                    listOf(Color.Transparent, BorderGold, Gold.copy(alpha = 0.45f), BorderGold, Color.Transparent)
-                )
-            )
+            .background(BorderGold)
     )
 }
 
@@ -265,15 +255,7 @@ fun AlbumArt(
     Box(
         modifier = modifier
             .clip(shape)
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        Gold.copy(alpha = 0.16f),
-                        SurfaceElevatedDark,
-                        Ink
-                    )
-                )
-            )
+            .background(SurfaceVariantDark)
             .border(1.dp, Gold.copy(alpha = 0.16f), shape),
         contentAlignment = Alignment.Center
     ) {
@@ -287,7 +269,11 @@ fun AlbumArt(
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(artwork)
-                .crossfade(280)
+                .size(512)
+                .crossfade(220)
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
+                .fallback(R.drawable.placeholder)
                 .build(),
             contentDescription = contentDescription,
             modifier = Modifier.fillMaxSize(),
@@ -304,7 +290,7 @@ fun SongRow(
     onClick: () -> Unit,
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier,
-    artwork: Any? = AudioRepository.getAlbumArtUri(song.albumId)
+    artwork: Any? = song.artworkUri
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(18.dp)
@@ -526,7 +512,7 @@ fun Modifier.pressScale(
 @Composable
 fun SongCover(song: Song, modifier: Modifier = Modifier, shape: Shape = RoundedCornerShape(14.dp)) {
     AlbumArt(
-        artwork = AudioRepository.getAlbumArtUri(song.albumId),
+        artwork = song.artworkUri,
         modifier = modifier,
         contentDescription = song.album,
         shape = shape

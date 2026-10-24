@@ -46,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -122,11 +121,7 @@ fun FavoritesScreen(
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 10.dp)
                                     .clip(RoundedCornerShape(28.dp))
-                                    .background(
-                                        Brush.linearGradient(
-                                            listOf(Color(0xFF241B0B), SurfaceDark, Ink)
-                                        )
-                                    )
+                                    .background(SurfaceDark)
                                     .border(
                                         1.dp,
                                         Gold.copy(alpha = 0.3f),
@@ -138,12 +133,7 @@ fun FavoritesScreen(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
                                         .size(130.dp)
-                                        .background(
-                                            Brush.radialGradient(
-                                                listOf(Gold.copy(alpha = 0.18f), Color.Transparent)
-                                            ),
-                                            CircleShape
-                                        )
+                                        .background(Gold.copy(alpha = 0.05f), CircleShape)
                                 )
                                 Column {
                                     Row(verticalAlignment = Alignment.CenterVertically) {

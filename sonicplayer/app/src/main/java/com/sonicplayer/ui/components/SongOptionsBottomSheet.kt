@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sonicplayer.data.model.Song
-import com.sonicplayer.repository.AudioRepository
 import com.sonicplayer.ui.theme.Gold
 import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
@@ -79,7 +78,7 @@ fun SongOptionsBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AlbumArt(
-                    artwork = AudioRepository.getAlbumArtUri(song.albumId),
+                    artwork = song.artworkUri,
                     contentDescription = song.album,
                     modifier = Modifier.size(56.dp),
                     shape = RoundedCornerShape(15.dp)

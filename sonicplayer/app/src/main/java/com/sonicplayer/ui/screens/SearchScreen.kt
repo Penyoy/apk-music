@@ -46,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -260,11 +259,7 @@ private fun SearchHint() {
                 modifier = Modifier
                     .size(92.dp)
                     .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(Gold.copy(alpha = 0.18f), androidx.compose.ui.graphics.Color.Transparent)
-                        )
-                    )
+                    .background(Gold.copy(alpha = 0.05f))
                     .border(1.dp, Gold.copy(alpha = 0.28f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {

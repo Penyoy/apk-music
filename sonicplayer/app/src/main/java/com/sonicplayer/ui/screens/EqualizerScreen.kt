@@ -38,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -125,11 +124,7 @@ fun EqualizerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(Color(0xFF241C0A), SurfaceDark, Ink)
-                            )
-                        )
+                        .background(SurfaceDark)
                         .border(1.dp, Gold.copy(alpha = 0.28f), RoundedCornerShape(24.dp))
                         .padding(20.dp)
                 ) {

@@ -1,6 +1,5 @@
 package com.sonicplayer.ui.theme
 
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 // ── Gold palette ─────────────────────────────────────────────────────────────
@@ -32,15 +31,6 @@ val Success = Color(0xFF7BCB97)
 val Warning = Color(0xFFE0B15A)
 val Info = Color(0xFF7FA6C9)
 
-// ── Gradients ────────────────────────────────────────────────────────────────
-val GoldGradient = Brush.linearGradient(listOf(GoldLight, Gold, GoldDark))
-val GoldGradientSoft = Brush.linearGradient(
-    listOf(Gold.copy(alpha = 0.35f), Gold.copy(alpha = 0.05f), Gold.copy(alpha = 0.25f))
-)
-val CoverPlaceholderGradient = Brush.linearGradient(
-    listOf(SurfaceHighDark, SurfaceVariantDark, SurfaceDark)
-)
-
 // ── Legacy aliases kept for compatibility ────────────────────────────────────
 val Primary = Gold
 val PrimaryDark = GoldDark
@@ -58,8 +48,6 @@ val TextTertiaryDark = TextTertiary
 val TextPrimaryLight = TextPrimary
 val TextSecondaryLight = TextSecondary
 val TextTertiaryLight = TextTertiary
-val GradientStart = Gold
-val GradientEnd = GoldDark
 val NowPlayingBackground = InkSoft
 val ProgressBarBackground = BorderGold
 val ProgressBarActive = Gold

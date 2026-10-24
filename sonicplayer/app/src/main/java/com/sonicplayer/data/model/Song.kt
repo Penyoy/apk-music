@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.sonicplayer.artwork.ArtworkProvider
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -32,7 +33,11 @@ data class Song(
 ) : Parcelable {
     val contentUri: Uri
         get() = Uri.parse(uri)
-    
+
+    /** Stable content URI backed by [ArtworkProvider] (embedded art or placeholder). */
+    val artworkUri: Uri
+        get() = ArtworkProvider.songUri(id)
+
     val displayTitle: String
         get() = title.ifBlank { "Unknown Title" }
     

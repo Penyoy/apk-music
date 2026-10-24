@@ -45,7 +45,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -122,12 +121,7 @@ fun SleepTimerScreen(
                     Box(
                         modifier = Modifier
                             .size(252.dp)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(Gold.copy(alpha = 0.14f), Color.Transparent)
-                                ),
-                                CircleShape
-                            )
+                            .background(Gold.copy(alpha = 0.05f), CircleShape)
                     )
                     Canvas(modifier = Modifier.size(232.dp)) {
                         val stroke = 9.dp.toPx()

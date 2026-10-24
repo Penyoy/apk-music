@@ -54,7 +54,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -74,7 +73,6 @@ import com.sonicplayer.ui.components.SongRow
 import com.sonicplayer.ui.components.SurfacePill
 import com.sonicplayer.ui.components.pressScale
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldGradient
 import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceDark
@@ -171,11 +169,7 @@ private fun ArtistCard(artist: Artist, onClick: () -> Unit) {
             .fillMaxWidth()
             .pressScale(interaction)
             .clip(RoundedCornerShape(20.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(SurfaceVariantDark, SurfaceDark)
-                )
-            )
+            .background(SurfaceVariantDark)
             .border(1.dp, Gold.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
             .clickable(interactionSource = interaction, indication = null, onClick = onClick)
             .padding(14.dp),
@@ -184,12 +178,7 @@ private fun ArtistCard(artist: Artist, onClick: () -> Unit) {
         Box(
             modifier = Modifier
                 .size(58.dp)
-                .background(
-                    Brush.linearGradient(
-                        listOf(Gold.copy(alpha = 0.35f), GoldDeepAlpha)
-                    ),
-                    CircleShape
-                )
+                .background(GoldDeepAlpha, CircleShape)
                 .border(1.dp, Gold.copy(alpha = 0.45f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
@@ -279,24 +268,14 @@ fun ArtistDetailScreen(
                                 modifier = Modifier
                                     .align(Alignment.Center)
                                     .size(avatarSize + 28.dp)
-                                    .background(
-                                        Brush.radialGradient(
-                                            listOf(Gold.copy(alpha = 0.2f), Color.Transparent)
-                                        ),
-                                        CircleShape
-                                    ),
+                                    .background(Gold.copy(alpha = 0.06f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Box(
                                     modifier = Modifier
                                         .size(avatarSize)
-                                        .background(
-                                            Brush.linearGradient(
-                                                listOf(Gold.copy(alpha = 0.35f), GoldDeepAlpha)
-                                            ),
-                                            CircleShape
-                                        )
-                                        .border(1.5.dp, GoldGradient, CircleShape),
+                                        .background(GoldDeepAlpha, CircleShape)
+                                        .border(1.5.dp, Gold, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(

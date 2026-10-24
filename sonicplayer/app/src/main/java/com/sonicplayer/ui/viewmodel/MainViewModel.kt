@@ -5,10 +5,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sonicplayer.data.model.Album
 import com.sonicplayer.data.model.Artist
+import com.sonicplayer.data.model.Lyrics
 import com.sonicplayer.data.model.PlaybackState
 import com.sonicplayer.data.model.Playlist
 import com.sonicplayer.data.model.Song
 import com.sonicplayer.repository.AudioRepository
+import com.sonicplayer.repository.LyricsRepository
 import com.sonicplayer.repository.PlaybackRepository
 import com.sonicplayer.repository.PlaylistRepository
 import com.sonicplayer.util.SleepTimerManager
@@ -21,9 +23,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,7 +38,8 @@ class MainViewModel @Inject constructor(
     application: Application,
     private val audioRepository: AudioRepository,
     private val playbackRepository: PlaybackRepository,
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    private val lyricsRepository: LyricsRepository
 ) : AndroidViewModel(application) {
 
     // Library
@@ -69,6 +74,13 @@ class MainViewModel @Inject constructor(
     // Playback
     val playbackState: StateFlow<PlaybackState> = playbackRepository.playbackState
     val currentPlaylist: StateFlow<List<Song>> = playbackRepository.currentPlaylist
+
+    /** Lyrics for the current track, loaded lazily when the track changes. */
+    val currentLyrics: StateFlow<Lyrics?> = playbackState
+        .map { it.currentSong }
+        .distinctUntilChanged { old, new -> old?.id == new?.id }
+        .mapLatest { song -> song?.let { lyricsRepository.getLyrics(it) } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val sleepTimerManager = SleepTimerManager()
 

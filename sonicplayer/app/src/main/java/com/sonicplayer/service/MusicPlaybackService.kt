@@ -1,37 +1,45 @@
 package com.sonicplayer.service
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.annotation.OptIn
-import androidx.core.app.NotificationCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import androidx.media3.session.MediaStyleNotificationHelper
 import com.sonicplayer.MainActivity
 import com.sonicplayer.R
 import dagger.hilt.android.AndroidEntryPoint
 
+/**
+ * Hosts the ExoPlayer instance and the MediaSession.
+ *
+ * The notification is produced by Media3's [DefaultMediaNotificationProvider]. It reads
+ * the artwork URI from the current [androidx.media3.common.MediaMetadata], so the large
+ * icon (thumbnail) is always shown, including the bundled placeholder when a track has
+ * no cover. Keeping the notification in Media3 also avoids duplicate foreground
+ * notifications, which was a source of crashes on newer Android versions.
+ */
 @AndroidEntryPoint
 @OptIn(UnstableApi::class)
 class MusicPlaybackService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
-    private val channelId = "sonic_player_channel"
-    private val notificationId = 1
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel()
-        
+
+        val notificationProvider = DefaultMediaNotificationProvider.Builder(this)
+            .setChannelId(CHANNEL_ID)
+            .setChannelName(R.string.notification_channel_name)
+            .setNotificationId(NOTIFICATION_ID)
+            .build()
+        notificationProvider.setSmallIcon(R.drawable.ic_notification)
+        setMediaNotificationProvider(notificationProvider)
+
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
@@ -42,16 +50,6 @@ class MusicPlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
-
-        player.addListener(object : Player.Listener {
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                updateNotification()
-            }
-
-            override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
-                updateNotification()
-            }
-        })
 
         val sessionActivityPendingIntent = PendingIntent.getActivity(
             this,
@@ -72,51 +70,28 @@ class MusicPlaybackService : MediaSessionService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val player = mediaSession?.player
-        if (player != null) {
-            if (!player.playWhenReady || player.mediaItemCount == 0) {
+        runCatching {
+            val player = mediaSession?.player
+            if (player == null || !player.playWhenReady || player.mediaItemCount == 0) {
                 stopSelf()
             }
-        }
+        }.onFailure { stopSelf() }
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onDestroy() {
-        mediaSession?.run {
-            player.release()
-            release()
-            mediaSession = null
+        runCatching {
+            mediaSession?.run {
+                player.release()
+                release()
+            }
         }
+        mediaSession = null
         super.onDestroy()
     }
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Music Playback",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Shows the currently playing music"
-                setShowBadge(false)
-            }
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun updateNotification() {
-        val session = mediaSession ?: return
-        val style = MediaStyleNotificationHelper.MediaStyle(session)
-            .setShowActionsInCompactView(0, 1, 2)
-
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setStyle(style)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(session.player.isPlaying)
-            .build()
-
-        startForeground(notificationId, notification)
+    companion object {
+        private const val CHANNEL_ID = "sonic_player_channel"
+        private const val NOTIFICATION_ID = 1001
     }
 }

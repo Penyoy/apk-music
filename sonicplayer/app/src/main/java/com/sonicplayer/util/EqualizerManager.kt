@@ -62,17 +62,17 @@ class EqualizerManager(private val context: Context) {
             bassBoost = BassBoost(0, audioSessionId)
             virtualizer = Virtualizer(0, audioSessionId)
             loudnessEnhancer = LoudnessEnhancer(audioSessionId)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
     }
     
     fun setEnabled(enabled: Boolean) {
         _isEnabled.value = enabled
-        equalizer?.enabled = enabled
-        bassBoost?.enabled = enabled
-        virtualizer?.enabled = enabled
-        loudnessEnhancer?.enabled = enabled
+        runCatching { equalizer?.enabled = enabled }
+        runCatching { bassBoost?.enabled = enabled }
+        runCatching { virtualizer?.enabled = enabled }
+        runCatching { loudnessEnhancer?.enabled = enabled }
     }
     
     fun setBandLevel(band: Int, level: Float) {
@@ -83,7 +83,7 @@ class EqualizerManager(private val context: Context) {
                 currentLevels[band] = level
                 _bandLevels.value = currentLevels
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
     }
@@ -100,7 +100,7 @@ class EqualizerManager(private val context: Context) {
                 levels.add(equalizer?.getBandLevel(i.toShort())?.toFloat() ?: 0f)
             }
             _bandLevels.value = levels
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
     }
@@ -109,7 +109,7 @@ class EqualizerManager(private val context: Context) {
         try {
             bassBoost?.setStrength(strength.toShort())
             _bassBoostStrength.value = strength
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
     }
@@ -118,7 +118,7 @@ class EqualizerManager(private val context: Context) {
         try {
             virtualizer?.setStrength(strength.toShort())
             _virtualizerStrength.value = strength
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
     }
@@ -127,7 +127,7 @@ class EqualizerManager(private val context: Context) {
         try {
             loudnessEnhancer?.setTargetGain(gainmB)
             _loudnessEnhancerStrength.value = gainmB
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
     }
@@ -140,7 +140,7 @@ class EqualizerManager(private val context: Context) {
                 val freqHz = equalizer?.getCenterFreq(i.toShort())?.div(1000) ?: 0
                 frequencies.add(freqHz.toInt())
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
         return frequencies
@@ -150,16 +150,16 @@ class EqualizerManager(private val context: Context) {
         return try {
             val range = equalizer?.bandLevelRange
             Pair((range?.get(0)?.toInt() ?: -1500), (range?.get(1)?.toInt() ?: 1500))
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Pair(-1500, 1500)
         }
     }
     
     fun release() {
-        equalizer?.release()
-        bassBoost?.release()
-        virtualizer?.release()
-        loudnessEnhancer?.release()
+        runCatching { equalizer?.release() }
+        runCatching { bassBoost?.release() }
+        runCatching { virtualizer?.release() }
+        runCatching { loudnessEnhancer?.release() }
         equalizer = null
         bassBoost = null
         virtualizer = null

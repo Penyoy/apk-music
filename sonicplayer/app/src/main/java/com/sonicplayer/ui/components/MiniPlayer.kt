@@ -41,9 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sonicplayer.data.model.PlaybackState
-import com.sonicplayer.repository.AudioRepository
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldGradient
 import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceDark
@@ -77,7 +75,7 @@ fun MiniPlayer(
             .padding(horizontal = 10.dp, vertical = 4.dp)
             .pressScale(interactionSource)
             .clip(shape)
-            .background(BrushMiniPlayer)
+            .background(SurfaceDark)
             .border(1.dp, Gold.copy(alpha = 0.3f), shape)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
     ) {
@@ -92,7 +90,7 @@ fun MiniPlayer(
                     modifier = Modifier
                         .fillMaxWidth(animatedProgress)
                         .fillMaxHeight()
-                        .background(GoldGradient)
+                        .background(Gold)
                 )
             }
 
@@ -103,7 +101,7 @@ fun MiniPlayer(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AlbumArt(
-                    artwork = AudioRepository.getAlbumArtUri(song.albumId),
+                    artwork = song.artworkUri,
                     contentDescription = song.album,
                     modifier = Modifier.size(46.dp),
                     shape = RoundedCornerShape(12.dp)
@@ -191,11 +189,3 @@ fun MiniPlayer(
         }
     }
 }
-
-private val BrushMiniPlayer = androidx.compose.ui.graphics.Brush.linearGradient(
-    listOf(
-        SurfaceDark,
-        androidx.compose.ui.graphics.Color(0xFF17140E),
-        SurfaceDark
-    )
-)

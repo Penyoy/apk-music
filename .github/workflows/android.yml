@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   build:
-    name: Assemble debug APK
+    name: Assemble release APK
     runs-on: ubuntu-24.04
     timeout-minutes: 30
 
@@ -39,12 +39,12 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x sonicplayer/gradlew
 
-      - name: Build debug APK
+      - name: Build release APK
         working-directory: sonicplayer
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew assembleDebug --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
+          ./gradlew assembleRelease --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
 
       - name: Report build errors
         if: failure()
@@ -94,9 +94,22 @@ jobs:
             echo "::error title=All Kotlin compile errors::${all_errors}"
           fi
 
+      - name: Report APK size
+        if: success()
+        shell: bash
+        run: |
+          apk=$(ls -1 sonicplayer/app/build/outputs/apk/release/*.apk | head -n 1)
+          {
+            echo "## Build succeeded"
+            echo
+            echo "- APK: \`$(basename "$apk")\`"
+            echo "- Size: $(stat -c%s "$apk") bytes ($(du -h "$apk" | cut -f1))"
+            echo "- SHA-256: \`$(sha256sum "$apk" | cut -d' ' -f1)\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: SonicPlayer-debug-apk
-          path: sonicplayer/app/build/outputs/apk/debug/*.apk
+          name: SonicPlayer-release-apk
+          path: sonicplayer/app/build/outputs/apk/release/*.apk
           if-no-files-found: error

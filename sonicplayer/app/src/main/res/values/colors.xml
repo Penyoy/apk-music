@@ -18,6 +18,4 @@
     <color name="error">#E05A5A</color>
     <color name="success">#7BCB97</color>
     <color name="warning">#E0B15A</color>
-    <color name="gradient_start">#F5D76E</color>
-    <color name="gradient_end">#9C7A1E</color>
 </resources>

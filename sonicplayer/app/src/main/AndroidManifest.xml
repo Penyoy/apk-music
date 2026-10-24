@@ -68,16 +68,12 @@
             </intent-filter>
         </receiver>
 
-        <!-- Auto download album art worker -->
+        <!-- Serves bounded-size cover art to Coil and to the media notification. -->
         <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
+            android:name=".artwork.ArtworkProvider"
+            android:authorities="${applicationId}.artwork"
             android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup" />
-        </provider>
+            android:grantUriPermissions="true" />
 
     </application>
 

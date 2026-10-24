@@ -55,8 +55,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -204,11 +202,7 @@ private fun PermissionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFF120F08), Ink, Ink)
-                )
-            )
+            .background(Ink)
             .systemBarsPadding()
     ) {
         // Warm ambient glow behind the logo.
@@ -218,12 +212,7 @@ private fun PermissionScreen(
                 .padding(top = 54.dp)
                 .size(320.dp)
                 .graphicsLayer { scaleX = glow; scaleY = glow }
-                .background(
-                    Brush.radialGradient(
-                        listOf(Gold.copy(alpha = 0.16f), Color.Transparent)
-                    ),
-                    CircleShape
-                )
+                .background(Gold.copy(alpha = 0.06f), CircleShape)
         )
 
         AnimatedVisibility(
@@ -247,12 +236,7 @@ private fun PermissionScreen(
                         Box(
                             modifier = Modifier
                                 .size(112.dp)
-                                .background(
-                                    Brush.radialGradient(
-                                        listOf(Gold.copy(alpha = 0.32f), Color.Transparent)
-                                    ),
-                                    CircleShape
-                                )
+                                .background(Gold.copy(alpha = 0.12f), CircleShape)
                                 .border(1.dp, Gold.copy(alpha = 0.6f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {

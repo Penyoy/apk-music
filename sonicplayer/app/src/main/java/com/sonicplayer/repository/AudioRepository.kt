@@ -2,9 +2,11 @@ package com.sonicplayer.repository
 
 import android.content.ContentUris
 import android.content.Context
+import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import com.sonicplayer.artwork.ArtworkProvider
 import com.sonicplayer.data.dao.FavoriteDao
 import com.sonicplayer.data.dao.RecentlyPlayedDao
 import com.sonicplayer.data.dao.SongDao
@@ -127,58 +129,73 @@ class AudioRepository @Inject constructor(
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
         val sortOrder = "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC"
 
-        context.contentResolver.query(collection, projection, selection, null, sortOrder)?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-            val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-            val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-            val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-            val albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-            val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-            val trackColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-            val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
-            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
-            val pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
-            val yearColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+        runCatching {
+            context.contentResolver.query(collection, projection, selection, null, sortOrder)
+                ?.use { cursor ->
+                    val idColumn = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
+                    if (idColumn < 0) return@use
 
-            while (cursor.moveToNext()) {
-                val id = cursor.getLong(idColumn)
-                val uri = ContentUris.withAppendedId(collection, id).toString()
+                    val titleColumn = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
+                    val artistColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
+                    val albumColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
+                    val albumIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
+                    val durationColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
+                    val trackColumn = cursor.getColumnIndex(MediaStore.Audio.Media.TRACK)
+                    val dateAddedColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED)
+                    val dateModifiedColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED)
+                    val pathColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+                    val yearColumn = cursor.getColumnIndex(MediaStore.Audio.Media.YEAR)
 
-                songs.add(
-                    Song(
-                        id = id,
-                        title = cursor.getString(titleColumn) ?: "",
-                        artist = cursor.getString(artistColumn) ?: "",
-                        album = cursor.getString(albumColumn) ?: "",
-                        albumId = cursor.getLong(albumIdColumn),
-                        duration = cursor.getLong(durationColumn),
-                        trackNumber = cursor.getInt(trackColumn),
-                        dateAdded = cursor.getLong(dateAddedColumn) * 1000,
-                        dateModified = cursor.getLong(dateModifiedColumn) * 1000,
-                        path = cursor.getString(pathColumn) ?: "",
-                        uri = uri,
-                        year = cursor.getInt(yearColumn),
-                        genre = "",
-                        bitrate = 0,
-                        sampleRate = 0
-                    )
-                )
-            }
+                    while (cursor.moveToNext()) {
+                        val id = cursor.getLong(idColumn)
+                        if (id <= 0L) continue
+
+                        val uri = ContentUris.withAppendedId(collection, id).toString()
+                        songs.add(
+                            Song(
+                                id = id,
+                                title = cursor.stringAt(titleColumn),
+                                artist = cursor.stringAt(artistColumn),
+                                album = cursor.stringAt(albumColumn),
+                                albumId = cursor.longAt(albumIdColumn),
+                                duration = cursor.longAt(durationColumn).coerceAtLeast(0L),
+                                trackNumber = cursor.intAt(trackColumn),
+                                dateAdded = cursor.longAt(dateAddedColumn) * 1000L,
+                                dateModified = cursor.longAt(dateModifiedColumn) * 1000L,
+                                path = cursor.stringAt(pathColumn),
+                                uri = uri,
+                                year = cursor.intAt(yearColumn),
+                                genre = "",
+                                bitrate = 0,
+                                sampleRate = 0
+                            )
+                        )
+                    }
+                }
         }
-
         return songs
     }
 
     companion object {
-        fun getAlbumArtUri(albumId: Long): Uri {
-            return ContentUris.withAppendedId(
-                Uri.parse("content://media/external/audio/albumart"),
-                albumId
-            )
-        }
+        fun getAlbumArtUri(albumId: Long): Uri = ArtworkProvider.albumUri(albumId)
 
         fun getSongUri(songId: Long): Uri {
             return ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
         }
     }
+}
+
+private fun Cursor.stringAt(column: Int): String {
+    if (column < 0 || isNull(column)) return ""
+    return runCatching { getString(column) }.getOrNull().orEmpty()
+}
+
+private fun Cursor.longAt(column: Int): Long {
+    if (column < 0 || isNull(column)) return 0L
+    return runCatching { getLong(column) }.getOrDefault(0L)
+}
+
+private fun Cursor.intAt(column: Int): Int {
+    if (column < 0 || isNull(column)) return 0
+    return runCatching { getInt(column) }.getOrDefault(0)
 }
