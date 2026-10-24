@@ -1,23 +1,34 @@
 package com.sonicplayer.ui.viewmodel
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.sonicplayer.data.model.Song
 import com.sonicplayer.data.model.Album
 import com.sonicplayer.data.model.Artist
-import com.sonicplayer.data.model.Playlist
 import com.sonicplayer.data.model.PlaybackState
+import com.sonicplayer.data.model.Playlist
+import com.sonicplayer.data.model.Song
 import com.sonicplayer.repository.AudioRepository
 import com.sonicplayer.repository.PlaybackRepository
 import com.sonicplayer.repository.PlaylistRepository
 import com.sonicplayer.util.SleepTimerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class MainViewModel @Inject constructor(
     application: Application,
@@ -26,36 +37,39 @@ class MainViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository
 ) : AndroidViewModel(application) {
 
-    // Library data
+    // Library
     val songs: StateFlow<List<Song>> = audioRepository.getAllSongs()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val albums: StateFlow<List<Album>> = audioRepository.getAllAlbums()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val artists: StateFlow<List<Artist>> = audioRepository.getAllArtists()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val playlists: StateFlow<List<Playlist>> = playlistRepository.getAllPlaylists()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val favoriteSongs: StateFlow<List<Song>> = audioRepository.getFavoriteSongs()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val favoriteIds: StateFlow<Set<Long>> = favoriteSongs
+        .map { list -> list.map { it.id }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     val recentlyPlayed: StateFlow<List<Song>> = audioRepository.getRecentlyPlayedSongs()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val recentlyAdded: StateFlow<List<Song>> = audioRepository.getRecentlyAddedSongs()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val mostPlayed: StateFlow<List<Song>> = audioRepository.getMostPlayedSongs()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     // Playback
     val playbackState: StateFlow<PlaybackState> = playbackRepository.playbackState
     val currentPlaylist: StateFlow<List<Song>> = playbackRepository.currentPlaylist
 
-    // Sleep Timer
     val sleepTimerManager = SleepTimerManager()
 
     // Search
@@ -63,17 +77,13 @@ class MainViewModel @Inject constructor(
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     val searchResults: StateFlow<List<Song>> = _searchQuery
-        .debounce(300)
+        .debounce(280)
         .flatMapLatest { query ->
-            if (query.isBlank()) {
-                flowOf(emptyList())
-            } else {
-                audioRepository.searchSongs(query)
-            }
+            if (query.isBlank()) flowOf(emptyList()) else audioRepository.searchSongs(query)
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // Loading state
+    // Loading
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -81,7 +91,7 @@ class MainViewModel @Inject constructor(
     private val _selectedTab = MutableStateFlow(0)
     val selectedTab: StateFlow<Int> = _selectedTab.asStateFlow()
 
-    // Sort options
+    // Sorting
     private val _sortBy = MutableStateFlow(SortOption.TITLE)
     val sortBy: StateFlow<SortOption> = _sortBy.asStateFlow()
 
@@ -94,7 +104,7 @@ class MainViewModel @Inject constructor(
             SortOption.DATE_ADDED -> songList.sortedByDescending { it.dateAdded }
             SortOption.DATE_PLAYED -> songList.sortedByDescending { it.lastPlayed }
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
         refreshLibrary()
@@ -105,8 +115,6 @@ class MainViewModel @Inject constructor(
             _isLoading.value = true
             try {
                 audioRepository.refreshLibrary()
-            } catch (e: Exception) {
-                e.printStackTrace()
             } finally {
                 _isLoading.value = false
             }
@@ -125,98 +133,64 @@ class MainViewModel @Inject constructor(
         _sortBy.value = option
     }
 
-    // Playback controls
+    // Library helpers used by detail screens
+    fun getSongsByAlbum(albumId: Long): Flow<List<Song>> =
+        audioRepository.getSongsByAlbum(albumId)
+
+    fun getSongsByArtist(artist: String): Flow<List<Song>> =
+        audioRepository.getSongsByArtist(artist)
+
+    fun getSongsInPlaylist(playlistId: Long): Flow<List<Song>> =
+        playlistRepository.getSongsInPlaylist(playlistId)
+
+    // Playback
     fun playSong(song: Song) {
         playbackRepository.playSong(song)
-        viewModelScope.launch {
-            audioRepository.recordPlay(song.id)
-        }
+        viewModelScope.launch { audioRepository.recordPlay(song.id) }
     }
 
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
+        if (songs.isEmpty()) return
         playbackRepository.playSongs(songs, startIndex)
         viewModelScope.launch {
-            songs.getOrNull(startIndex)?.let {
-                audioRepository.recordPlay(it.id)
-            }
+            songs.getOrNull(startIndex)?.let { audioRepository.recordPlay(it.id) }
         }
     }
 
-    fun playPause() {
-        playbackRepository.playPause()
-    }
-
-    fun next() {
-        playbackRepository.next()
-    }
-
-    fun previous() {
-        playbackRepository.previous()
-    }
-
-    fun seekTo(position: Long) {
-        playbackRepository.seekTo(position)
-    }
-
-    fun toggleRepeatMode() {
-        playbackRepository.toggleRepeatMode()
-    }
-
-    fun toggleShuffleMode() {
-        playbackRepository.toggleShuffleMode()
-    }
-
-    fun setPlaybackSpeed(speed: Float) {
-        playbackRepository.setPlaybackSpeed(speed)
-    }
-
-    fun addToQueue(song: Song) {
-        playbackRepository.addToQueue(song)
-    }
-
-    fun addNext(song: Song) {
-        playbackRepository.addNext(song)
-    }
+    fun playPause() = playbackRepository.playPause()
+    fun pause() = playbackRepository.pause()
+    fun next() = playbackRepository.next()
+    fun previous() = playbackRepository.previous()
+    fun seekTo(position: Long) = playbackRepository.seekTo(position)
+    fun toggleRepeatMode() = playbackRepository.toggleRepeatMode()
+    fun toggleShuffleMode() = playbackRepository.toggleShuffleMode()
+    fun setPlaybackSpeed(speed: Float) = playbackRepository.setPlaybackSpeed(speed)
+    fun addToQueue(song: Song) = playbackRepository.addToQueue(song)
+    fun addNext(song: Song) = playbackRepository.addNext(song)
 
     // Favorites
     fun toggleFavorite(songId: Long) {
-        viewModelScope.launch {
-            audioRepository.toggleFavorite(songId)
-        }
+        viewModelScope.launch { audioRepository.toggleFavorite(songId) }
     }
 
-    // Playlist management
-    fun createPlaylist(name: String) {
+    // Playlists
+    fun createPlaylist(name: String, onCreated: ((Long) -> Unit)? = null) {
         viewModelScope.launch {
-            playlistRepository.createPlaylist(name)
+            val id = playlistRepository.createPlaylist(name)
+            onCreated?.invoke(id)
         }
     }
 
     fun deletePlaylist(id: Long) {
-        viewModelScope.launch {
-            playlistRepository.deletePlaylist(id)
-        }
+        viewModelScope.launch { playlistRepository.deletePlaylist(id) }
     }
 
     fun addToPlaylist(playlistId: Long, songId: Long) {
-        viewModelScope.launch {
-            playlistRepository.addSongToPlaylist(playlistId, songId)
-        }
+        viewModelScope.launch { playlistRepository.addSongToPlaylist(playlistId, songId) }
     }
 
     fun removeFromPlaylist(playlistId: Long, songId: Long) {
-        viewModelScope.launch {
-            playlistRepository.removeSongFromPlaylist(playlistId, songId)
-        }
-    }
-
-    fun getSongsInPlaylist(playlistId: Long): Flow<List<Song>> {
-        return playlistRepository.getSongsInPlaylist(playlistId)
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        playbackRepository.release()
+        viewModelScope.launch { playlistRepository.removeSongFromPlaylist(playlistId, songId) }
     }
 
     enum class SortOption {

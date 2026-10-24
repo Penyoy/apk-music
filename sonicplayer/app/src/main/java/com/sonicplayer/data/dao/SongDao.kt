@@ -9,6 +9,9 @@ interface SongDao {
     @Query("SELECT * FROM songs ORDER BY title COLLATE NOCASE")
     fun getAllSongs(): Flow<List<Song>>
 
+    @Query("SELECT * FROM songs")
+    suspend fun getAllSongsOnce(): List<Song>
+
     @Query("SELECT * FROM songs WHERE title LIKE '%' || :query || '%' OR artist LIKE '%' || :query || '%' OR album LIKE '%' || :query || '%' ORDER BY title COLLATE NOCASE")
     fun searchSongs(query: String): Flow<List<Song>>
 
@@ -50,6 +53,13 @@ interface SongDao {
 
     @Query("DELETE FROM songs")
     suspend fun deleteAll()
+
+    @Transaction
+    suspend fun replaceAll(songs: List<Song>) {
+        if (songs.isEmpty()) return
+        deleteAll()
+        insertAll(songs)
+    }
 
     @Query("SELECT COUNT(*) FROM songs")
     fun getSongCount(): Flow<Int>

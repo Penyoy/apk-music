@@ -2,16 +2,15 @@ package com.sonicplayer.repository
 
 import android.content.ContentUris
 import android.content.Context
-import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import com.sonicplayer.data.model.Song
-import com.sonicplayer.data.model.Album
-import com.sonicplayer.data.model.Artist
-import com.sonicplayer.data.dao.SongDao
 import com.sonicplayer.data.dao.FavoriteDao
 import com.sonicplayer.data.dao.RecentlyPlayedDao
+import com.sonicplayer.data.dao.SongDao
+import com.sonicplayer.data.model.Album
+import com.sonicplayer.data.model.Artist
+import com.sonicplayer.data.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -76,9 +75,29 @@ class AudioRepository @Inject constructor(
         recentlyPlayedDao.recordPlay(songId)
     }
 
+    /**
+     * Scans the device media library and stores a fresh copy of every track while
+     * preserving the user's favorites and play statistics.
+     */
     suspend fun refreshLibrary() = withContext(Dispatchers.IO) {
-        val songs = scanAudioFiles()
-        songDao.insertAll(songs)
+        val scanned = runCatching { scanAudioFiles() }.getOrElse { emptyList() }
+        if (scanned.isEmpty()) return@withContext
+
+        val previous = runCatching { songDao.getAllSongsOnce() }
+            .getOrElse { emptyList() }
+            .associateBy { it.id }
+
+        val merged = scanned.map { song ->
+            previous[song.id]?.let { old ->
+                song.copy(
+                    isFavorite = old.isFavorite,
+                    playCount = old.playCount,
+                    lastPlayed = old.lastPlayed,
+                    datePlayed = old.datePlayed
+                )
+            } ?: song
+        }
+        songDao.replaceAll(merged)
     }
 
     private fun scanAudioFiles(): List<Song> {
@@ -89,6 +108,7 @@ class AudioRepository @Inject constructor(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         }
 
+        // Only use columns that are available on every supported Android version.
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -100,10 +120,7 @@ class AudioRepository @Inject constructor(
             MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.DATE_MODIFIED,
             MediaStore.Audio.Media.DATA,
-            MediaStore.Audio.Media.YEAR,
-            MediaStore.Audio.Media.GENRE,
-            MediaStore.Audio.Media.BITRATE,
-            MediaStore.Audio.Media.SAMPLE_RATE
+            MediaStore.Audio.Media.YEAR
         )
 
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
@@ -121,14 +138,11 @@ class AudioRepository @Inject constructor(
             val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
             val pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
             val yearColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
-            val genreColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.GENRE)
-            val bitrateColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.BITRATE)
-            val sampleRateColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SAMPLE_RATE)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val uri = ContentUris.withAppendedId(collection, id).toString()
-                
+
                 songs.add(
                     Song(
                         id = id,
@@ -143,9 +157,9 @@ class AudioRepository @Inject constructor(
                         path = cursor.getString(pathColumn) ?: "",
                         uri = uri,
                         year = cursor.getInt(yearColumn),
-                        genre = cursor.getString(genreColumn) ?: "",
-                        bitrate = cursor.getInt(bitrateColumn),
-                        sampleRate = cursor.getInt(sampleRateColumn)
+                        genre = "",
+                        bitrate = 0,
+                        sampleRate = 0
                     )
                 )
             }
@@ -154,15 +168,14 @@ class AudioRepository @Inject constructor(
         return songs
     }
 
-    fun getAlbumArtUri(albumId: Long): Uri {
-        val uri = ContentUris.withAppendedId(
-            Uri.parse("content://media/external/audio/albumart"),
-            albumId
-        )
-        return uri
-    }
-
     companion object {
+        fun getAlbumArtUri(albumId: Long): Uri {
+            return ContentUris.withAppendedId(
+                Uri.parse("content://media/external/audio/albumart"),
+                albumId
+            )
+        }
+
         fun getSongUri(songId: Long): Uri {
             return ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
         }

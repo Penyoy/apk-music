@@ -1,30 +1,85 @@
 package com.sonicplayer.ui.screens
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.sonicplayer.data.model.Song
-import com.sonicplayer.repository.AudioRepository
-import com.sonicplayer.ui.viewmodel.MainViewModel
+import com.sonicplayer.ui.components.CreatePlaylistDialog
+import com.sonicplayer.ui.components.EmptyState
+import com.sonicplayer.ui.components.PlaylistPickerDialog
+import com.sonicplayer.ui.components.SonicLogo
+import com.sonicplayer.ui.components.SonicTopBar
 import com.sonicplayer.ui.components.SongOptionsBottomSheet
-import kotlinx.coroutines.launch
+import com.sonicplayer.ui.components.SongRow
+import com.sonicplayer.ui.components.SurfacePill
+import com.sonicplayer.ui.theme.Gold
+import com.sonicplayer.ui.theme.GoldGradient
+import com.sonicplayer.ui.theme.GoldLight
+import com.sonicplayer.ui.theme.Ink
+import com.sonicplayer.ui.theme.SurfaceDark
+import com.sonicplayer.ui.theme.SurfaceElevatedDark
+import com.sonicplayer.ui.theme.TextPrimary
+import com.sonicplayer.ui.theme.TextSecondary
+import com.sonicplayer.ui.theme.TextTertiary
+import com.sonicplayer.ui.viewmodel.MainViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongsScreen(
     navController: NavController,
@@ -33,87 +88,130 @@ fun SongsScreen(
     val songs by viewModel.sortedSongs.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val playbackState by viewModel.playbackState.collectAsState()
-    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val scope = rememberCoroutineScope()
+    val favoriteIds by viewModel.favoriteIds.collectAsState()
+    val playlists by viewModel.playlists.collectAsState()
+    val sortBy by viewModel.sortBy.collectAsState()
+    val listState = rememberLazyListState()
 
     var showSortMenu by remember { mutableStateOf(false) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
     var showOptions by remember { mutableStateOf(false) }
+    var showPlaylistPicker by remember { mutableStateOf(false) }
+    var showCreatePlaylist by remember { mutableStateOf(false) }
+    var heroVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) { heroVisible = true }
 
     Scaffold(
+        containerColor = Ink,
         topBar = {
-            TopAppBar(
-                title = { Text("Lagu") },
-                actions = {
-                    IconButton(onClick = { navController.navigate("search") }) {
-                        Icon(Icons.Default.Search, contentDescription = "Cari")
-                    }
-                    IconButton(onClick = { showSortMenu = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Urutkan")
-                    }
-                    DropdownMenu(
-                        expanded = showSortMenu,
-                        onDismissRequest = { showSortMenu = false }
-                    ) {
-                        MainViewModel.SortOption.values().forEach { option ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(when(option) {
-                                        MainViewModel.SortOption.TITLE -> "Judul"
-                                        MainViewModel.SortOption.ARTIST -> "Artis"
-                                        MainViewModel.SortOption.ALBUM -> "Album"
-                                        MainViewModel.SortOption.DURATION -> "Durasi"
-                                        MainViewModel.SortOption.DATE_ADDED -> "Terbaru"
-                                        MainViewModel.SortOption.DATE_PLAYED -> "Terakhir Diputar"
-                                    })
-                                },
-                                onClick = {
-                                    viewModel.setSortOption(option)
-                                    showSortMenu = false
-                                }
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        floatingActionButton = {
-            if (songs.isNotEmpty()) {
-                ExtendedFloatingActionButton(
-                    onClick = { viewModel.playSongs(songs) },
-                    icon = { Icon(Icons.Default.Shuffle, null) },
-                    text = { Text("Acak Semua") },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+            SonicTopBar(
+                title = "Lagu",
+                subtitle = "Perpustakaan"
+            ) {
+                IconButton(onClick = { navController.navigate("search") }) {
+                    Icon(Icons.Filled.Search, contentDescription = "Cari")
+                }
+                IconButton(onClick = { navController.navigate("settings") }) {
+                    Icon(Icons.Filled.Settings, contentDescription = "Pengaturan")
+                }
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            if (isLoading && songs.isEmpty()) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else if (songs.isEmpty()) {
-                EmptyState(message = "Tidak ada lagu di perangkat")
-            } else {
-                LazyColumn(
-                    state = listState,
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    items(songs, key = { it.id }) { song ->
-                        SongItem(
-                            song = song,
-                            isPlaying = playbackState.currentSong?.id == song.id && playbackState.isPlaying,
-                            onClick = { viewModel.playSong(song) },
-                            onMoreClick = {
-                                selectedSong = song
-                                showOptions = true
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            when {
+                isLoading && songs.isEmpty() -> {
+                    CircularProgressIndicator(
+                        color = Gold,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                songs.isEmpty() -> {
+                    EmptyState(
+                        message = "Belum ada lagu di perangkat ini.\nTambahkan file audio lalu pindai ulang.",
+                        actionLabel = "Pindai Ulang",
+                        onAction = { viewModel.refreshLibrary() }
+                    )
+                }
+
+                else -> {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 24.dp)
+                    ) {
+                        item {
+                            AnimatedVisibility(
+                                visible = heroVisible,
+                                enter = fadeIn(tween(450)) + slideInVertically(tween(450)) { it / 5 }
+                            ) {
+                                CollectionHero(
+                                    songCount = songs.size,
+                                    totalDuration = songs.sumOf { it.duration },
+                                    onPlayAll = { viewModel.playSongs(songs) },
+                                    onShuffle = {
+                                        viewModel.playSongs(songs.shuffled(), 0)
+                                    }
+                                )
                             }
-                        )
+                        }
+
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Semua Lagu",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = TextPrimary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Box {
+                                    SurfacePill(
+                                        text = sortLabel(sortBy),
+                                        icon = Icons.Filled.Sort,
+                                        selected = true,
+                                        modifier = Modifier.clickable { showSortMenu = true }
+                                    )
+                                    DropdownMenu(
+                                        expanded = showSortMenu,
+                                        onDismissRequest = { showSortMenu = false }
+                                    ) {
+                                        MainViewModel.SortOption.entries.forEach { option ->
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        sortLabel(option),
+                                                        color = if (option == sortBy) GoldLight else TextPrimary
+                                                    )
+                                                },
+                                                onClick = {
+                                                    viewModel.setSortOption(option)
+                                                    showSortMenu = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+                            SongRow(
+                                song = song,
+                                isPlaying = playbackState.currentSong?.id == song.id && playbackState.isPlaying,
+                                isFavorite = favoriteIds.contains(song.id),
+                                onClick = { viewModel.playSongs(songs, index) },
+                                onMoreClick = {
+                                    selectedSong = song
+                                    showOptions = true
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -121,124 +219,195 @@ fun SongsScreen(
     }
 
     if (showOptions && selectedSong != null) {
+        val song = selectedSong!!
         SongOptionsBottomSheet(
-            song = selectedSong!!,
+            song = song,
             onDismiss = { showOptions = false },
             onPlayNext = {
-                viewModel.addNext(selectedSong!!)
+                viewModel.addNext(song)
                 showOptions = false
             },
             onAddToQueue = {
-                viewModel.addToQueue(selectedSong!!)
+                viewModel.addToQueue(song)
                 showOptions = false
             },
             onAddToPlaylist = {
                 showOptions = false
+                showPlaylistPicker = true
             },
             onToggleFavorite = {
-                viewModel.toggleFavorite(selectedSong!!.id)
+                viewModel.toggleFavorite(song.id)
                 showOptions = false
             },
-            isFavorite = selectedSong!!.isFavorite
+            isFavorite = favoriteIds.contains(song.id)
+        )
+    }
+
+    if (showPlaylistPicker && selectedSong != null) {
+        PlaylistPickerDialog(
+            playlists = playlists,
+            onDismiss = { showPlaylistPicker = false },
+            onPlaylistSelected = { playlistId ->
+                selectedSong?.let { viewModel.addToPlaylist(playlistId, it.id) }
+                showPlaylistPicker = false
+            },
+            onCreatePlaylist = {
+                showPlaylistPicker = false
+                showCreatePlaylist = true
+            }
+        )
+    }
+
+    if (showCreatePlaylist) {
+        CreatePlaylistDialog(
+            onDismiss = { showCreatePlaylist = false },
+            onCreate = { name ->
+                val songId = selectedSong?.id
+                viewModel.createPlaylist(name) { playlistId ->
+                    if (songId != null) viewModel.addToPlaylist(playlistId, songId)
+                }
+                showCreatePlaylist = false
+            }
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SongItem(
-    song: Song,
-    isPlaying: Boolean,
-    onClick: () -> Unit,
-    onMoreClick: () -> Unit
+private fun CollectionHero(
+    songCount: Int,
+    totalDuration: Long,
+    onPlayAll: () -> Unit,
+    onShuffle: () -> Unit
 ) {
-    ListItem(
-        headlineContent = {
-            Text(
-                text = song.displayTitle,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = if (isPlaying) MaterialTheme.colorScheme.primary 
-                        else MaterialTheme.colorScheme.onSurface
-            )
-        },
-        supportingContent = {
-            Text(
-                text = "${song.displayArtist} · ${song.durationText}",
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
-        leadingContent = {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                AsyncImage(
-                    model = AudioRepository.getSongUri(song.id),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Color(0xFF211A0A),
+                        SurfaceDark,
+                        Ink
+                    )
                 )
-                if (isPlaying) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.GraphicEq,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+            )
+            .border(1.dp, Gold.copy(alpha = 0.3f), RoundedCornerShape(28.dp))
+    ) {
+        // Decorative gold glow.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 18.dp, end = 18.dp)
+                .size(150.dp)
+                .background(
+                    Brush.radialGradient(
+                        listOf(Gold.copy(alpha = 0.18f), Color.Transparent)
+                    ),
+                    CircleShape
+                )
+        )
+
+        Column(modifier = Modifier.padding(22.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SurfacePill(
+                    text = "KOLEKSI PRIBADI",
+                    selected = true
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                SonicLogo(size = 34.dp)
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Text(
+                text = "Musik yang",
+                style = MaterialTheme.typography.headlineLarge,
+                color = TextPrimary
+            )
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = "berkilau",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Gold,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "  ♪",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = GoldLight
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "$songCount lagu · ${Song.formatDuration(totalDuration)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = onPlayAll,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Gold,
+                        contentColor = Ink
+                    )
+                ) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Putar Semua", style = MaterialTheme.typography.titleSmall)
+                }
+                OutlinedButton(
+                    onClick = onShuffle,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Gold.copy(alpha = 0.45f))
+                ) {
+                    Icon(Icons.Filled.Shuffle, contentDescription = null, tint = Gold)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Acak", color = Gold, style = MaterialTheme.typography.titleSmall)
                 }
             }
-        },
-        trailingContent = {
-            IconButton(onClick = onMoreClick) {
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Opsi",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    imageVector = Icons.Filled.MusicNote,
+                    contentDescription = null,
+                    tint = TextTertiary,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Audio lokal · Kualitas tinggi",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextTertiary
                 )
             }
-        },
-        modifier = Modifier.clickable(onClick = onClick),
-        colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.background
-        )
-    )
-}
-
-@Composable
-fun EmptyState(message: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.MusicOff,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
         }
     }
+}
+
+private fun sortLabel(option: MainViewModel.SortOption): String = when (option) {
+    MainViewModel.SortOption.TITLE -> "Judul"
+    MainViewModel.SortOption.ARTIST -> "Artis"
+    MainViewModel.SortOption.ALBUM -> "Album"
+    MainViewModel.SortOption.DURATION -> "Durasi"
+    MainViewModel.SortOption.DATE_ADDED -> "Terbaru"
+    MainViewModel.SortOption.DATE_PLAYED -> "Terakhir Diputar"
 }

@@ -12,7 +12,10 @@ class SleepTimerManager {
     
     private val _remainingMillis = MutableStateFlow(0L)
     val remainingMillis: StateFlow<Long> = _remainingMillis
-    
+
+    private val _totalMillis = MutableStateFlow(0L)
+    val totalMillis: StateFlow<Long> = _totalMillis
+
     private val _remainingMinutes = MutableStateFlow(0)
     val remainingMinutes: StateFlow<Int> = _remainingMinutes
 
@@ -21,6 +24,7 @@ class SleepTimerManager {
         
         val millis = minutes * 60 * 1000L
         _remainingMillis.value = millis
+        _totalMillis.value = millis
         _remainingMinutes.value = minutes
         _isActive.value = true
         
@@ -33,6 +37,7 @@ class SleepTimerManager {
             override fun onFinish() {
                 _isActive.value = false
                 _remainingMillis.value = 0
+                _totalMillis.value = 0
                 _remainingMinutes.value = 0
                 onFinish()
             }
@@ -44,6 +49,7 @@ class SleepTimerManager {
         timer = null
         _isActive.value = false
         _remainingMillis.value = 0
+        _totalMillis.value = 0
         _remainingMinutes.value = 0
     }
 

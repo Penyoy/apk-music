@@ -2,23 +2,34 @@ package com.sonicplayer.repository
 
 import android.content.ComponentName
 import android.content.Context
+import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.RepeatMode
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
-import com.sonicplayer.data.model.Song
-import com.sonicplayer.data.model.QueueItem
-import com.sonicplayer.data.model.PlaybackState
 import com.sonicplayer.data.dao.QueueDao
 import com.sonicplayer.data.dao.SongDao
+import com.sonicplayer.data.model.PlaybackState
+import com.sonicplayer.data.model.Song
 import com.sonicplayer.service.MusicPlaybackService
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,23 +41,25 @@ class PlaybackRepository @Inject constructor(
 ) {
     private var mediaController: MediaController? = null
     private val controllerFuture: ListenableFuture<MediaController>
-    
+    private var positionUpdatesStarted = false
+
     private val _playbackState = MutableStateFlow(PlaybackState())
     val playbackState: StateFlow<PlaybackState> = _playbackState.asStateFlow()
-    
+
     private val _currentPlaylist = MutableStateFlow<List<Song>>(emptyList())
     val currentPlaylist: StateFlow<List<Song>> = _currentPlaylist.asStateFlow()
-    
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     init {
-        val sessionToken = SessionToken(context, ComponentName(context, MusicPlaybackService::class.java))
+        val sessionToken = SessionToken(
+            context,
+            ComponentName(context, MusicPlaybackService::class.java)
+        )
         controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
         controllerFuture.addListener({
-            mediaController = controllerFuture.get()
-            setupMediaControllerListener()
-            startPositionUpdates()
-        }, MoreExecutors.directExecutor())
+            runCatching { controllerFuture.get() }.getOrNull()?.let { attachController(it) }
+        }, ContextCompat.getMainExecutor(context))
 
         scope.launch {
             queueDao.getQueueSongs().collect { songs ->
@@ -55,8 +68,25 @@ class PlaybackRepository @Inject constructor(
         }
     }
 
-    private fun setupMediaControllerListener() {
-        mediaController?.addListener(object : Player.Listener {
+    private fun attachController(controller: MediaController) {
+        if (mediaController === controller) return
+        mediaController = controller
+        setupMediaControllerListener(controller)
+        startPositionUpdates()
+        updatePlaybackState()
+    }
+
+    private suspend fun awaitController(): MediaController? {
+        mediaController?.let { return it }
+        val controller = withContext(Dispatchers.IO) {
+            runCatching { controllerFuture.get() }.getOrNull()
+        } ?: return null
+        attachController(controller)
+        return controller
+    }
+
+    private fun setupMediaControllerListener(controller: MediaController) {
+        controller.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 updatePlaybackState()
             }
@@ -91,17 +121,17 @@ class PlaybackRepository @Inject constructor(
     private fun updatePlaybackState() {
         val controller = mediaController ?: return
         val currentMediaItem = controller.currentMediaItem
-        
+
         scope.launch {
             val currentSong = currentMediaItem?.mediaId?.toLongOrNull()?.let {
                 songDao.getSongById(it)
             }
-            
+
             _playbackState.update { state ->
                 state.copy(
                     isPlaying = controller.isPlaying,
-                    currentSong = currentSong,
-                    position = controller.currentPosition,
+                    currentSong = currentSong ?: if (currentMediaItem == null) null else state.currentSong,
+                    position = controller.currentPosition.coerceAtLeast(0),
                     duration = controller.duration.coerceAtLeast(0),
                     repeatMode = when (controller.repeatMode) {
                         RepeatMode.ALL -> PlaybackState.REPEAT_MODE_ALL
@@ -116,13 +146,15 @@ class PlaybackRepository @Inject constructor(
     }
 
     private fun startPositionUpdates() {
+        if (positionUpdatesStarted) return
+        positionUpdatesStarted = true
         scope.launch {
             while (isActive) {
                 val controller = mediaController
                 if (controller != null && controller.isPlaying) {
                     _playbackState.update { state ->
                         state.copy(
-                            position = controller.currentPosition,
+                            position = controller.currentPosition.coerceAtLeast(0),
                             duration = controller.duration.coerceAtLeast(0)
                         )
                     }
@@ -133,58 +165,38 @@ class PlaybackRepository @Inject constructor(
     }
 
     fun playSong(song: Song) {
-        scope.launch {
-            queueDao.setQueue(listOf(song.id), 0)
-            playMediaItem(song)
-        }
+        playSongs(listOf(song), 0)
     }
 
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
         if (songs.isEmpty()) return
         scope.launch {
             queueDao.setQueue(songs.map { it.id }, startIndex)
-            val controller = mediaController ?: return@launch
-            
+            val controller = awaitController() ?: return@launch
+
             controller.clearMediaItems()
             songs.forEach { song ->
-                val mediaItem = MediaItem.Builder()
-                    .setMediaId(song.id.toString())
-                    .setUri(song.uri)
-                    .setMediaMetadata(
-                        androidx.media3.common.MediaMetadata.Builder()
-                            .setTitle(song.displayTitle)
-                            .setArtist(song.displayArtist)
-                            .setAlbumTitle(song.displayAlbum)
-                            .setArtworkUri(AudioRepository.getSongUri(song.id))
-                            .build()
-                    )
-                    .build()
-                controller.addMediaItem(mediaItem)
+                controller.addMediaItem(song.toMediaItem())
             }
-            controller.seekToDefaultPosition(startIndex)
+            controller.seekToDefaultPosition(startIndex.coerceIn(0, songs.lastIndex))
             controller.prepare()
             controller.play()
         }
     }
 
-    private fun playMediaItem(song: Song) {
-        val controller = mediaController ?: return
-        val mediaItem = MediaItem.Builder()
-            .setMediaId(song.id.toString())
-            .setUri(song.uri)
+    private fun Song.toMediaItem(): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId(id.toString())
+            .setUri(uri)
             .setMediaMetadata(
-                androidx.media3.common.MediaMetadata.Builder()
-                    .setTitle(song.displayTitle)
-                    .setArtist(song.displayArtist)
-                    .setAlbumTitle(song.displayAlbum)
-                    .setArtworkUri(AudioRepository.getSongUri(song.id))
+                MediaMetadata.Builder()
+                    .setTitle(displayTitle)
+                    .setArtist(displayArtist)
+                    .setAlbumTitle(displayAlbum)
+                    .setArtworkUri(AudioRepository.getAlbumArtUri(albumId))
                     .build()
             )
             .build()
-        
-        controller.setMediaItem(mediaItem)
-        controller.prepare()
-        controller.play()
     }
 
     fun playPause() {
@@ -221,6 +233,7 @@ class PlaybackRepository @Inject constructor(
 
     fun seekTo(position: Long) {
         mediaController?.seekTo(position)
+        _playbackState.update { it.copy(position = position.coerceAtLeast(0)) }
     }
 
     fun toggleRepeatMode() {
@@ -231,11 +244,13 @@ class PlaybackRepository @Inject constructor(
             RepeatMode.ONE -> RepeatMode.OFF
             else -> RepeatMode.OFF
         }
+        updatePlaybackState()
     }
 
     fun toggleShuffleMode() {
         val controller = mediaController ?: return
         controller.shuffleModeEnabled = !controller.shuffleModeEnabled
+        updatePlaybackState()
     }
 
     fun setPlaybackSpeed(speed: Float) {
@@ -251,37 +266,18 @@ class PlaybackRepository @Inject constructor(
     fun addToQueue(song: Song) {
         scope.launch {
             queueDao.addToQueue(song.id)
-            val controller = mediaController ?: return@launch
-            val mediaItem = MediaItem.Builder()
-                .setMediaId(song.id.toString())
-                .setUri(song.uri)
-                .setMediaMetadata(
-                    androidx.media3.common.MediaMetadata.Builder()
-                        .setTitle(song.displayTitle)
-                        .setArtist(song.displayArtist)
-                        .build()
-                )
-                .build()
-            controller.addMediaItem(mediaItem)
+            val controller = awaitController() ?: return@launch
+            controller.addMediaItem(song.toMediaItem())
         }
     }
 
     fun addNext(song: Song) {
         scope.launch {
             queueDao.addNext(song.id)
-            val controller = mediaController ?: return@launch
-            val mediaItem = MediaItem.Builder()
-                .setMediaId(song.id.toString())
-                .setUri(song.uri)
-                .setMediaMetadata(
-                    androidx.media3.common.MediaMetadata.Builder()
-                        .setTitle(song.displayTitle)
-                        .setArtist(song.displayArtist)
-                        .build()
-                )
-                .build()
-            val nextIndex = controller.currentMediaItemIndex + 1
-            controller.addMediaItem(nextIndex, mediaItem)
+            val controller = awaitController() ?: return@launch
+            val nextIndex = (controller.currentMediaItemIndex + 1)
+                .coerceIn(0, controller.mediaItemCount)
+            controller.addMediaItem(nextIndex, song.toMediaItem())
         }
     }
 

@@ -1,49 +1,65 @@
 package com.sonicplayer.ui.theme
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-// Primary colors
-val Primary = Color(0xFF4F46E5)
-val PrimaryDark = Color(0xFF4338CA)
-val PrimaryLight = Color(0xFF818CF8)
+// ── Gold palette ─────────────────────────────────────────────────────────────
+val Gold = Color(0xFFD4AF37)
+val GoldLight = Color(0xFFF5D76E)
+val GoldPale = Color(0xFFFFF1C2)
+val GoldDark = Color(0xFF9C7A1E)
+val GoldDeep = Color(0xFF6B5210)
+val GoldMuted = Color(0xFFBFA45C)
 
-// Accent colors
-val Accent = Color(0xFF06B6D4)
-val AccentDark = Color(0xFF0891B2)
+// ── Ink palette ──────────────────────────────────────────────────────────────
+val Ink = Color(0xFF070707)
+val InkSoft = Color(0xFF0D0D0D)
+val SurfaceDark = Color(0xFF121212)
+val SurfaceVariantDark = Color(0xFF1B1915)
+val SurfaceElevatedDark = Color(0xFF232019)
+val SurfaceHighDark = Color(0xFF2C2820)
+val BorderGold = Color(0xFF3A3222)
+val BorderGoldSoft = Color(0xFF272218)
 
-// Dark theme colors
-val BackgroundDark = Color(0xFF0F0F1A)
-val SurfaceDark = Color(0xFF1A1A2E)
-val SurfaceVariantDark = Color(0xFF252540)
-val SurfaceElevatedDark = Color(0xFF2D2D4A)
+// ── Type ─────────────────────────────────────────────────────────────────────
+val TextPrimary = Color(0xFFF6F1E3)
+val TextSecondary = Color(0xFFB9B09D)
+val TextTertiary = Color(0xFF827A6A)
 
-// Light theme colors
-val BackgroundLight = Color(0xFFF8F9FC)
-val SurfaceLight = Color(0xFFFFFFFF)
-val SurfaceVariantLight = Color(0xFFF0F0F5)
-val SurfaceElevatedLight = Color(0xFFF5F5FA)
+// ── Feedback ─────────────────────────────────────────────────────────────────
+val Error = Color(0xFFE05A5A)
+val Success = Color(0xFF7BCB97)
+val Warning = Color(0xFFE0B15A)
+val Info = Color(0xFF7FA6C9)
 
-// Text colors dark
-val TextPrimaryDark = Color(0xFFFFFFFF)
-val TextSecondaryDark = Color(0xFFA0A0B8)
-val TextTertiaryDark = Color(0xFF6B6B80)
+// ── Gradients ────────────────────────────────────────────────────────────────
+val GoldGradient = Brush.linearGradient(listOf(GoldLight, Gold, GoldDark))
+val GoldGradientSoft = Brush.linearGradient(
+    listOf(Gold.copy(alpha = 0.35f), Gold.copy(alpha = 0.05f), Gold.copy(alpha = 0.25f))
+)
+val CoverPlaceholderGradient = Brush.linearGradient(
+    listOf(SurfaceHighDark, SurfaceVariantDark, SurfaceDark)
+)
 
-// Text colors light
-val TextPrimaryLight = Color(0xFF1A1A2E)
-val TextSecondaryLight = Color(0xFF6B7280)
-val TextTertiaryLight = Color(0xFF9CA3AF)
-
-// Status colors
-val Success = Color(0xFF10B981)
-val Error = Color(0xFFEF4444)
-val Warning = Color(0xFFF59E0B)
-val Info = Color(0xFF3B82F6)
-
-// Gradient colors
-val GradientStart = Color(0xFF4F46E5)
-val GradientEnd = Color(0xFF06B6D4)
-
-// Now playing
-val NowPlayingBackground = Color(0xFF151528)
-val ProgressBarBackground = Color(0xFF3A3A55)
-val ProgressBarActive = Color(0xFF4F46E5)
+// ── Legacy aliases kept for compatibility ────────────────────────────────────
+val Primary = Gold
+val PrimaryDark = GoldDark
+val PrimaryLight = GoldLight
+val Accent = GoldLight
+val AccentDark = GoldDark
+val BackgroundDark = Ink
+val BackgroundLight = Ink
+val SurfaceLight = SurfaceDark
+val SurfaceVariantLight = SurfaceVariantDark
+val SurfaceElevatedLight = SurfaceElevatedDark
+val TextPrimaryDark = TextPrimary
+val TextSecondaryDark = TextSecondary
+val TextTertiaryDark = TextTertiary
+val TextPrimaryLight = TextPrimary
+val TextSecondaryLight = TextSecondary
+val TextTertiaryLight = TextTertiary
+val GradientStart = Gold
+val GradientEnd = GoldDark
+val NowPlayingBackground = InkSoft
+val ProgressBarBackground = BorderGold
+val ProgressBarActive = Gold

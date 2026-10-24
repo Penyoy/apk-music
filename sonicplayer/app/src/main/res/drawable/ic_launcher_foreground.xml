@@ -4,10 +4,14 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Minimal gold musical note: the SonicPlayer mark. -->
     <path
-        android:fillColor="#4F46E5"
-        android:pathData="M54,30C40.7,30 30,40.7 30,54c0,13.3 10.7,24 24,24c13.3,0 24,-10.7 24,-24C78,40.7 67.3,30 54,30zM54,36c9.9,0 18,8.1 18,18c0,9.9 -8.1,18 -18,18c-9.9,0 -18,-8.1 -18,-18C36,44.1 44.1,36 54,36z"/>
+        android:fillColor="#D4AF37"
+        android:pathData="M59,26 L59,62.5 C59,69.5 52.5,75 44.5,75 C36.5,75 31,70.5 31,64.5 C31,58.5 36.5,54 44.5,54 C47.5,54 50.5,54.8 53,56.2 L53,26 Z" />
     <path
-        android:fillColor="#06B6D4"
-        android:pathData="M48,44L48,64L62,54L48,44z"/>
+        android:fillColor="#F5D76E"
+        android:pathData="M59,26 C70.5,30 77.5,40.5 75.5,53 L69.5,51 C71,41.5 66.5,33.5 59,30.2 Z" />
+    <path
+        android:fillColor="#F5D76E"
+        android:pathData="M59.2,25.2 L59.2,30.8 L53,41 L53,34.2 Z" />
 </vector>

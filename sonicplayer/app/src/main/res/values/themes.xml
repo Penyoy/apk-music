@@ -1,18 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base application theme -->
-    <style name="Theme.SonicPlayer" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+    <!-- Base application theme: deep black with gold accents. -->
+    <style name="Theme.SonicPlayer" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:colorAccent">@color/primary</item>
+        <item name="android:statusBarColor">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowDisablePreview">false</item>
     </style>
 
     <!-- Splash screen theme -->
     <style name="Theme.SonicPlayer.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#0F0F1A</item>
+        <item name="windowSplashScreenBackground">#070707</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
-        <item name="windowSplashScreenAnimationDuration">300</item>
+        <item name="windowSplashScreenAnimationDuration">350</item>
         <item name="postSplashScreenTheme">@style/Theme.SonicPlayer</item>
-        <item name="android:statusBarColor">#0F0F1A</item>
-        <item name="android:navigationBarColor">#0F0F1A</item>
+        <item name="android:statusBarColor">#070707</item>
+        <item name="android:navigationBarColor">#070707</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>
