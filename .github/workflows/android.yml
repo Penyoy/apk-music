@@ -43,20 +43,50 @@ jobs:
         working-directory: sonicplayer
         shell: bash
         run: |
-          set +e
           set -o pipefail
           ./gradlew assembleDebug --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
-          status=$?
-          if [ "$status" -ne 0 ]; then
+
+      - name: Report build errors
+        if: failure()
+        working-directory: sonicplayer
+        shell: bash
+        run: |
+          if [ ! -s build.log ]; then
             {
-              echo "## Gradle build failed"
-              echo '```'
-              tail -n 150 build.log
-              echo '```'
+              echo "## Build failed before Gradle"
+              echo "No Gradle log was produced. Check the setup steps above."
             } >> "$GITHUB_STEP_SUMMARY"
-            escaped=$(tail -n 40 build.log | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=Build failed before Gradle::No Gradle log was produced. Check the Setup Android SDK and Setup Gradle steps."
+            exit 0
+          fi
+
+          {
+            echo "## Gradle build failed"
+            echo
+            echo "### Compiler errors"
+            echo '```'
+            grep -E '^(e: |error: )' build.log | head -n 200 || true
+            echo '```'
+            echo
+            echo "### Failure details"
+            echo '```'
+            grep -nA 8 -E '^\* What went wrong:|^FAILURE:|^> Task .* FAILED' build.log | head -n 160 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          count=0
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            escaped=${line//'%'/'%25'}
+            escaped=${escaped//$'\r'/'%0D'}
+            echo "::error title=Kotlin compile error::${escaped}"
+            count=$((count + 1))
+            [ "$count" -ge 10 ] && break
+          done < <(grep -E '^e: ' build.log || true)
+
+          if [ "$count" -eq 0 ]; then
+            escaped=$(tail -n 30 build.log | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
             echo "::error title=Gradle build failed::${escaped}"
-            exit "$status"
           fi
 
       - name: Upload APK
