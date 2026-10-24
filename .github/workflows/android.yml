@@ -89,6 +89,11 @@ jobs:
             echo "::error title=Gradle build failed::${escaped}"
           fi
 
+          all_errors=$(grep -E '^e: ' build.log | head -n 50 | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
+          if [ -n "$all_errors" ]; then
+            echo "::error title=All Kotlin compile errors::${all_errors}"
+          fi
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

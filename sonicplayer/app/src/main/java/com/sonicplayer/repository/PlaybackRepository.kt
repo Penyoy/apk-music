@@ -7,7 +7,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
-import androidx.media3.common.RepeatMode
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
@@ -134,8 +133,8 @@ class PlaybackRepository @Inject constructor(
                     position = controller.currentPosition.coerceAtLeast(0),
                     duration = controller.duration.coerceAtLeast(0),
                     repeatMode = when (controller.repeatMode) {
-                        RepeatMode.ALL -> PlaybackState.REPEAT_MODE_ALL
-                        RepeatMode.ONE -> PlaybackState.REPEAT_MODE_ONE
+                        Player.REPEAT_MODE_ALL -> PlaybackState.REPEAT_MODE_ALL
+                        Player.REPEAT_MODE_ONE -> PlaybackState.REPEAT_MODE_ONE
                         else -> PlaybackState.REPEAT_MODE_OFF
                     },
                     shuffleMode = controller.shuffleModeEnabled,
@@ -239,10 +238,10 @@ class PlaybackRepository @Inject constructor(
     fun toggleRepeatMode() {
         val controller = mediaController ?: return
         controller.repeatMode = when (controller.repeatMode) {
-            RepeatMode.OFF -> RepeatMode.ALL
-            RepeatMode.ALL -> RepeatMode.ONE
-            RepeatMode.ONE -> RepeatMode.OFF
-            else -> RepeatMode.OFF
+            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+            Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_OFF
+            else -> Player.REPEAT_MODE_OFF
         }
         updatePlaybackState()
     }
