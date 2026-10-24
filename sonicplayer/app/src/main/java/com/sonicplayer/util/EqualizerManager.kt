@@ -77,7 +77,7 @@ class EqualizerManager(private val context: Context) {
     
     fun setBandLevel(band: Int, level: Float) {
         try {
-            equalizer?.setBandLevel(band.toShort(), level.toShort())
+            equalizer?.setBandLevel(band.toShort(), level.toInt().toShort())
             val currentLevels = _bandLevels.value.toMutableList()
             if (band < currentLevels.size) {
                 currentLevels[band] = level
