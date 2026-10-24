@@ -11,6 +11,7 @@ import com.sonicplayer.data.dao.SongDao
 import com.sonicplayer.data.model.Album
 import com.sonicplayer.data.model.Artist
 import com.sonicplayer.data.model.Song
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,7 +21,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AudioRepository @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val songDao: SongDao,
     private val favoriteDao: FavoriteDao,
     private val recentlyPlayedDao: RecentlyPlayedDao

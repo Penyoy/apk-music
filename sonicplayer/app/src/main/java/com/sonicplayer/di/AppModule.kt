@@ -8,9 +8,6 @@ import com.sonicplayer.data.dao.PlaylistDao
 import com.sonicplayer.data.dao.QueueDao
 import com.sonicplayer.data.dao.FavoriteDao
 import com.sonicplayer.data.dao.RecentlyPlayedDao
-import com.sonicplayer.repository.AudioRepository
-import com.sonicplayer.repository.PlaybackRepository
-import com.sonicplayer.repository.PlaylistRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,33 +50,4 @@ object AppModule {
     @Provides
     @Singleton
     fun provideRecentlyPlayedDao(database: SonicDatabase): RecentlyPlayedDao = database.recentlyPlayedDao()
-
-    @Provides
-    @Singleton
-    fun provideAudioRepository(
-        @ApplicationContext context: Context,
-        songDao: SongDao,
-        favoriteDao: FavoriteDao,
-        recentlyPlayedDao: RecentlyPlayedDao
-    ): AudioRepository {
-        return AudioRepository(context, songDao, favoriteDao, recentlyPlayedDao)
-    }
-
-    @Provides
-    @Singleton
-    fun providePlaylistRepository(
-        playlistDao: PlaylistDao
-    ): PlaylistRepository {
-        return PlaylistRepository(playlistDao)
-    }
-
-    @Provides
-    @Singleton
-    fun providePlaybackRepository(
-        @ApplicationContext context: Context,
-        queueDao: QueueDao,
-        songDao: SongDao
-    ): PlaybackRepository {
-        return PlaybackRepository(context, queueDao, songDao)
-    }
 }
