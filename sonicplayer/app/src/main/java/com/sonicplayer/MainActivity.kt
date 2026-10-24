@@ -78,11 +78,16 @@ class MainActivity : ComponentActivity() {
     private val _permissionGranted = mutableStateOf(false)
     private val _permanentlyDenied = mutableStateOf(false)
     private var permissionRequested = false
+    private var notificationPermissionRequested = false
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         permissionRequested = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // The notification permission was requested in the same dialog.
+            notificationPermissionRequested = true
+        }
         val audioGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions[Manifest.permission.READ_MEDIA_AUDIO] == true
         } else {
@@ -90,6 +95,12 @@ class MainActivity : ComponentActivity() {
         }
         _permissionGranted.value = audioGranted
         _permanentlyDenied.value = !audioGranted && !shouldShowAudioRationale()
+    }
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        // Media3 can show the playback notification (with artwork) once granted.
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -121,6 +132,9 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (!_permissionGranted.value) checkPermissions()
+        // Existing installs may already have audio access but not the Android 13+
+        // notification permission, so ask for it separately without blocking the UI.
+        if (_permissionGranted.value) requestNotificationPermissionIfNeeded()
     }
 
     private fun hasAudioPermission(): Boolean {
@@ -154,6 +168,15 @@ class MainActivity : ComponentActivity() {
 
     private fun checkPermissions() {
         _permissionGranted.value = hasAudioPermission()
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (notificationPermissionRequested || hasNotificationPermission()) return
+        notificationPermissionRequested = true
+        runCatching {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     private fun requestPermissions() {
