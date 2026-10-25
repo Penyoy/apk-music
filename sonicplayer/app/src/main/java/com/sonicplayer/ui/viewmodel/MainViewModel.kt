@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.sonicplayer.data.model.Album
 import com.sonicplayer.data.model.Artist
 import com.sonicplayer.data.model.Lyrics
+import com.sonicplayer.data.model.MusicFolder
 import com.sonicplayer.data.model.MusicQueue
 import com.sonicplayer.data.model.PlaybackState
 import com.sonicplayer.data.model.Playlist
@@ -74,6 +75,21 @@ class MainViewModel @Inject constructor(
 
     val notPlayed: StateFlow<List<Song>> = songs
         .map { list -> list.filter { it.lastPlayed == 0L }.sortedBy { it.title.lowercase() } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val folders: StateFlow<List<MusicFolder>> = songs
+        .map { list ->
+            list.groupBy { song -> song.path.substringBeforeLast('/', "") }
+                .filterKeys { path -> path.isNotBlank() }
+                .map { (path, tracks) ->
+                    MusicFolder(
+                        path = path,
+                        name = path.substringAfterLast('/').ifBlank { path },
+                        songCount = tracks.size
+                    )
+                }
+                .sortedBy { folder -> folder.name.lowercase() }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     // Playback
@@ -158,6 +174,9 @@ class MainViewModel @Inject constructor(
 
     fun getSongsByArtist(artist: String): Flow<List<Song>> =
         audioRepository.getSongsByArtist(artist)
+
+    fun getSongsInFolder(folderPath: String): Flow<List<Song>> =
+        audioRepository.getSongsInFolder("$folderPath/")
 
     fun getSongsInPlaylist(playlistId: Long): Flow<List<Song>> =
         playlistRepository.getSongsInPlaylist(playlistId)

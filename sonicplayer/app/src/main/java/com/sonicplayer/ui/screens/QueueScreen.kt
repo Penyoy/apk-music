@@ -87,8 +87,7 @@ fun QueueScreen(
         topBar = {
             SonicTopBar(
                 title = "Antrean",
-                subtitle = activeQueue?.displayName ?: "Pemutaran",
-                onBack = { navController.navigateUp() }
+                subtitle = activeQueue?.displayName ?: "Pemutaran"
             ) {
                 IconButton(onClick = { showQueuePicker = true }) {
                     Icon(Icons.Filled.QueueMusic, contentDescription = "Daftar antrean")
@@ -271,21 +270,13 @@ private fun QueueHeader(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(46.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(SurfaceElevatedDark),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Filled.QueueMusic,
-                contentDescription = null,
-                tint = Gold,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
+        Icon(
+            imageVector = Icons.Filled.QueueMusic,
+            contentDescription = null,
+            tint = Gold,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(14.dp))
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -356,7 +347,7 @@ private fun QueueRow(
             artwork = song.artworkUri,
             contentDescription = song.album,
             modifier = Modifier.size(44.dp),
-            shape = RoundedCornerShape(9.dp),
+            shape = RoundedCornerShape(2.dp),
             noteSize = 18
         )
         Spacer(modifier = Modifier.width(12.dp))

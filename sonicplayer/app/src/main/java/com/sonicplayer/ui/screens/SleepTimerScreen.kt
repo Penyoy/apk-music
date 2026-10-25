@@ -1,15 +1,7 @@
 package com.sonicplayer.ui.screens
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,19 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.NightlightRound
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,21 +32,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sonicplayer.ui.components.SonicTopBar
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceDark
-import com.sonicplayer.ui.theme.SurfaceHighDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
 import com.sonicplayer.ui.theme.TextTertiary
@@ -77,281 +57,167 @@ fun SleepTimerScreen(
 
     var selectedMinutes by remember { mutableStateOf(15) }
     val presetTimes = listOf(5, 10, 15, 30, 45, 60)
-    val progress = if (totalMillis > 0) {
-        (remainingMillis.toFloat() / totalMillis.toFloat()).coerceIn(0f, 1f)
-    } else {
-        0f
-    }
 
     Scaffold(
         containerColor = Ink,
         topBar = {
             SonicTopBar(
-                title = "Timer Tidur",
-                subtitle = "Istirahat",
+                title = "Timer tidur",
+                subtitle = "Hentikan musik otomatis",
                 onBack = { navController.navigateUp() }
             )
         }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Column(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .widthIn(max = 640.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                    .widthIn(max = 640.dp)
+                    .padding(vertical = 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = if (isActive) "Musik akan berhenti dalam" else "Pilih durasi istirahatmu",
+                    text = if (isActive) "Musik berhenti dalam" else "Pilih durasi",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary
                 )
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Box(
-                    modifier = Modifier.size(252.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(252.dp)
-                            .background(Gold.copy(alpha = 0.05f), CircleShape)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = if (isActive) formatRemaining(remainingMillis) else "$selectedMinutes menit",
+                    style = MaterialTheme.typography.displayLarge,
+                    color = Gold
+                )
+                if (isActive) {
+                    Text(
+                        text = "dari ${totalMillis / 60000} menit",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextTertiary
                     )
-                    Canvas(modifier = Modifier.size(232.dp)) {
-                        val stroke = 9.dp.toPx()
-                        drawCircle(
-                            color = SurfaceHighDark,
-                            style = Stroke(width = stroke)
-                        )
-                        if (progress > 0f || isActive) {
-                            drawArc(
-                                color = Gold.copy(alpha = 0.22f),
-                                startAngle = -90f,
-                                sweepAngle = 360f * progress,
-                                useCenter = false,
-                                style = Stroke(width = stroke * 2.2f, cap = StrokeCap.Round)
-                            )
-                            drawArc(
-                                color = Gold,
-                                startAngle = -90f,
-                                sweepAngle = 360f * progress,
-                                useCenter = false,
-                                style = Stroke(width = stroke, cap = StrokeCap.Round)
-                            )
-                        }
-                    }
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Filled.NightlightRound,
-                            contentDescription = null,
-                            tint = Gold,
-                            modifier = Modifier.size(26.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        AnimatedContent(
-                            targetState = isActive,
-                            transitionSpec = {
-                                (fadeIn(tween(250)) + scaleIn(tween(250), initialScale = 0.85f))
-                                    .togetherWith(
-                                        fadeOut(tween(150)) +
-                                            scaleOut(tween(150), targetScale = 0.9f)
-                                    )
-                            },
-                            label = "timerDisplay"
-                        ) { active ->
-                            if (active) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        text = formatRemaining(remainingMillis),
-                                        style = MaterialTheme.typography.displaySmall,
-                                        color = GoldLight,
-                                        fontFamily = FontFamily.Serif,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "tersisa",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TextSecondary,
-                                        letterSpacing = 1.6.sp
-                                    )
-                                }
-                            } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        text = "$selectedMinutes",
-                                        style = MaterialTheme.typography.displayLarge,
-                                        color = TextPrimary,
-                                        fontFamily = FontFamily.Serif,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "MENIT",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Gold,
-                                        letterSpacing = 2.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(22.dp))
-
-                AnimatedContent(
-                    targetState = isActive,
-                    transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) },
-                    label = "timerControls"
-                ) { active ->
-                    if (!active) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = "Preset waktu",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Gold,
-                                letterSpacing = 1.6.sp,
-                                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                            )
-                            presetTimes.chunked(3).forEach { rowTimes ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    rowTimes.forEach { minutes ->
-                                        FilterChip(
-                                            selected = selectedMinutes == minutes,
-                                            onClick = { selectedMinutes = minutes },
-                                            label = {
-                                                Text(
-                                                    "$minutes menit",
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    textAlign = TextAlign.Center,
-                                                    style = MaterialTheme.typography.labelMedium
-                                                )
-                                            },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                containerColor = SurfaceDark,
-                                                labelColor = TextSecondary,
-                                                selectedContainerColor = Gold.copy(alpha = 0.16f),
-                                                selectedLabelColor = Gold
-                                            ),
-                                            border = FilterChipDefaults.filterChipBorder(
-                                                enabled = true,
-                                                selected = selectedMinutes == minutes,
-                                                borderColor = Gold.copy(alpha = 0.18f),
-                                                selectedBorderColor = Gold.copy(alpha = 0.6f)
-                                            )
-                                        )
-                                    }
-                                    repeat(3 - rowTimes.size) {
-                                        Spacer(modifier = Modifier.weight(1f))
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(22.dp))
-
-                            Button(
-                                onClick = {
-                                    sleepTimer.startTimer(selectedMinutes) {
-                                        viewModel.pause()
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(52.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Gold,
-                                    contentColor = Ink
-                                )
-                            ) {
-                                Icon(Icons.Filled.Timer, null)
-                                Spacer(modifier = Modifier.size(8.dp))
-                                Text(
-                                    "Mulai Timer",
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                        }
-                    } else {
-                        Column(modifier = Modifier.fillMaxWidth()) {
+            if (!isActive) {
+                Text(
+                    text = "Preset waktu",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Gold,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                presetTimes.chunked(3).forEach { rowTimes ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        rowTimes.forEach { minutes ->
+                            val selected = selectedMinutes == minutes
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(SurfaceDark, RoundedCornerShape(18.dp))
-                                    .border(
-                                        1.dp,
-                                        Gold.copy(alpha = 0.16f),
-                                        RoundedCornerShape(18.dp)
-                                    )
-                                    .padding(16.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "Durasi awal",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = TextSecondary
-                                    )
-                                    Text(
-                                        text = "${totalMillis / 60000} menit",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = Gold
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(18.dp))
-                            OutlinedButton(
-                                onClick = { sleepTimer.cancelTimer() },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(52.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    1.dp,
-                                    Gold.copy(alpha = 0.5f)
-                                )
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(if (selected) Gold.copy(alpha = 0.16f) else SurfaceDark)
+                                    .clickable { selectedMinutes = minutes }
+                                    .padding(vertical = 13.dp),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    "Batalkan Timer",
-                                    color = Gold,
-                                    style = MaterialTheme.typography.titleSmall
+                                    text = "$minutes menit",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = if (selected) Gold else TextSecondary
                                 )
                             }
+                        }
+                        repeat(3 - rowTimes.size) {
+                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(22.dp))
-                Text(
-                    text = "Saat timer habis, musik akan dijeda otomatis.\nKamu tetap bisa melanjutkan pemutaran kapan saja.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextTertiary,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Button(
+                    onClick = {
+                        sleepTimer.startTimer(selectedMinutes) {
+                            viewModel.pause()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(2.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Gold,
+                        contentColor = Ink
+                    )
+                ) {
+                    Icon(Icons.Filled.Timer, null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "Mulai timer",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(SurfaceDark)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Durasi awal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "${totalMillis / 60000} menit",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(SurfaceDark)
+                        .clickable { sleepTimer.cancelTimer() }
+                        .padding(vertical = 13.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Batalkan timer",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Gold
+                    )
+                }
             }
+
+            Text(
+                text = "Saat timer habis, musik dijeda otomatis. Kamu tetap bisa melanjutkan pemutaran kapan saja.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextTertiary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp, bottom = 24.dp)
+            )
         }
     }
 }
 
 private fun formatRemaining(millis: Long): String {
-    val totalSeconds = (millis.coerceAtLeast(0) / 1000)
+    val totalSeconds = millis.coerceAtLeast(0) / 1000
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60

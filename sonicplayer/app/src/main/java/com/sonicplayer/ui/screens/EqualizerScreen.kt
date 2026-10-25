@@ -1,7 +1,7 @@
 package com.sonicplayer.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,18 +12,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -38,21 +35,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sonicplayer.ui.components.SonicTopBar
-import com.sonicplayer.ui.components.SurfacePill
+import com.sonicplayer.ui.theme.BorderGoldSoft
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceDark
-import com.sonicplayer.ui.theme.SurfaceElevatedDark
 import com.sonicplayer.ui.theme.SurfaceHighDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
@@ -87,7 +78,6 @@ fun EqualizerScreen(
         topBar = {
             SonicTopBar(
                 title = "Equalizer",
-                subtitle = "Suara",
                 onBack = { navController.navigateUp() },
                 actions = {
                     Switch(
@@ -98,7 +88,7 @@ fun EqualizerScreen(
                             checkedTrackColor = Gold,
                             uncheckedThumbColor = TextSecondary,
                             uncheckedTrackColor = SurfaceHighDark,
-                            uncheckedBorderColor = Gold.copy(alpha = 0.3f)
+                            uncheckedBorderColor = BorderGoldSoft
                         )
                     )
                     Spacer(modifier = Modifier.size(8.dp))
@@ -117,98 +107,57 @@ fun EqualizerScreen(
                     .widthIn(max = 720.dp)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
-                // Hero card
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(SurfaceDark)
-                        .border(1.dp, Gold.copy(alpha = 0.28f), RoundedCornerShape(24.dp))
-                        .padding(20.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(58.dp)
-                                .background(Gold.copy(alpha = 0.12f), CircleShape)
-                                .border(1.dp, Gold.copy(alpha = 0.38f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.GraphicEq,
-                                contentDescription = null,
-                                tint = Gold,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.size(14.dp))
-                        Column {
-                            Text(
-                                text = "Studio Sound",
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = TextPrimary,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = if (isEnabled) {
-                                    "Efek audio aktif · sesuaikan karaktermu"
-                                } else {
-                                    "Aktifkan untuk mengubah karakter suara"
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
-                        }
-                    }
-                }
+                Text(
+                    text = if (isEnabled) {
+                        "Efek suara aktif. Perubahan langsung terdengar."
+                    } else {
+                        "Efek suara nonaktif. Aktifkan lewat sakelar di atas."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextTertiary,
+                    modifier = Modifier.padding(vertical = 10.dp)
+                )
 
-                Spacer(modifier = Modifier.height(22.dp))
-
-                EqualizerSectionTitle("Preset Suara")
+                EqualizerSectionTitle("Preset")
                 if (presets.isEmpty()) {
                     Text(
-                        text = "Preset tidak tersedia pada perangkat ini. Kamu tetap dapat mengatur band secara manual.",
+                        text = "Preset tidak tersedia pada perangkat ini. Band dapat diatur manual.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 } else {
                     presets.chunked(2).forEach { rowPresets ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                .padding(vertical = 3.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             rowPresets.forEach { presetName ->
                                 val index = presets.indexOf(presetName)
-                                OutlinedButton(
-                                    onClick = { equalizerManager.usePreset(index) },
+                                val selected = currentPreset == index
+                                Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(44.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    enabled = isEnabled,
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        1.dp,
-                                        if (currentPreset == index) Gold else Gold.copy(alpha = 0.2f)
-                                    ),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (currentPreset == index) {
-                                            Gold.copy(alpha = 0.14f)
-                                        } else {
-                                            SurfaceDark
-                                        },
-                                        contentColor = if (currentPreset == index) Gold else TextSecondary
-                                    )
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(if (selected) Gold.copy(alpha = 0.16f) else SurfaceDark)
+                                        .clickable(enabled = isEnabled) {
+                                            equalizerManager.usePreset(index)
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 11.dp)
                                 ) {
                                     Text(
                                         text = presetName,
-                                        maxLines = 1,
-                                        style = MaterialTheme.typography.labelMedium
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = when {
+                                            !isEnabled -> TextTertiary
+                                            selected -> Gold
+                                            else -> TextSecondary
+                                        },
+                                        maxLines = 1
                                     )
                                 }
                             }
@@ -217,21 +166,19 @@ fun EqualizerScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 if (bandLevels.isNotEmpty()) {
-                    EqualizerSectionTitle("Band Frekuensi")
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(SurfaceDark)
-                            .border(1.dp, Gold.copy(alpha = 0.12f), RoundedCornerShape(22.dp))
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {
+                    EqualizerSectionTitle("Band frekuensi")
+                    Column(modifier = Modifier.fillMaxWidth()) {
                         bandLevels.forEachIndexed { index, level ->
                             val frequency = frequencies.getOrNull(index) ?: 0
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 1.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
                                     text = if (frequency >= 1000) {
                                         "${frequency / 1000}kHz"
@@ -240,7 +187,7 @@ fun EqualizerScreen(
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextSecondary,
-                                    modifier = Modifier.size(width = 46.dp, height = 18.dp)
+                                    modifier = Modifier.width(46.dp)
                                 )
                                 Slider(
                                     value = level,
@@ -249,73 +196,58 @@ fun EqualizerScreen(
                                     enabled = isEnabled,
                                     modifier = Modifier.weight(1f),
                                     colors = SliderDefaults.colors(
-                                        thumbColor = GoldLight,
+                                        thumbColor = Gold,
                                         activeTrackColor = Gold,
-                                        inactiveTrackColor = SurfaceHighDark
+                                        inactiveTrackColor = BorderGoldSoft
                                     )
                                 )
                                 Text(
                                     text = "${(level / 100f).toInt()}dB",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Gold,
+                                    color = if (isEnabled) TextSecondary else TextTertiary,
                                     textAlign = TextAlign.End,
-                                    modifier = Modifier.size(width = 38.dp, height = 18.dp)
+                                    modifier = Modifier.width(42.dp)
                                 )
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
 
-                EqualizerSectionTitle("Efek Tambahan")
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(SurfaceDark)
-                        .border(1.dp, Gold.copy(alpha = 0.12f), RoundedCornerShape(22.dp))
-                        .padding(16.dp)
-                ) {
-                    EffectSlider(
-                        title = "Bass Boost",
-                        value = bassBoost,
-                        enabled = isEnabled,
-                        onValueChange = { equalizerManager.setBassBoost(it) }
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    EffectSlider(
-                        title = "Virtualizer",
-                        value = virtualizer,
-                        enabled = isEnabled,
-                        onValueChange = { equalizerManager.setVirtualizer(it) }
-                    )
-                }
+                EqualizerSectionTitle("Efek tambahan")
+                EffectSlider(
+                    title = "Bass boost",
+                    value = bassBoost,
+                    enabled = isEnabled,
+                    onValueChange = { equalizerManager.setBassBoost(it) }
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                EffectSlider(
+                    title = "Virtualizer",
+                    value = virtualizer,
+                    enabled = isEnabled,
+                    onValueChange = { equalizerManager.setVirtualizer(it) }
+                )
 
-                Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Gold.copy(alpha = 0.05f))
-                        .border(1.dp, Gold.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
-                        .padding(14.dp),
+                        .padding(top = 18.dp, bottom = 24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Tune,
                         contentDescription = null,
-                        tint = Gold,
-                        modifier = Modifier.size(18.dp)
+                        tint = TextTertiary,
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.size(10.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Ketersediaan efek bergantung pada chip audio perangkatmu.",
+                        text = "Ketersediaan efek bergantung pada chip audio perangkat.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                        color = TextTertiary
                     )
                 }
-
-                Spacer(modifier = Modifier.height(26.dp))
             }
         }
     }
@@ -324,11 +256,10 @@ fun EqualizerScreen(
 @Composable
 private fun EqualizerSectionTitle(text: String) {
     Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
         color = Gold,
-        letterSpacing = 1.8.sp,
-        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+        modifier = Modifier.padding(top = 8.dp, bottom = 6.dp)
     )
 }
 
@@ -339,7 +270,7 @@ private fun EffectSlider(
     enabled: Boolean,
     onValueChange: (Int) -> Unit
 ) {
-    Column {
+    Column(modifier = Modifier.padding(vertical = 2.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -347,12 +278,13 @@ private fun EffectSlider(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
-                color = TextPrimary,
+                color = if (enabled) TextPrimary else TextTertiary,
                 modifier = Modifier.weight(1f)
             )
-            SurfacePill(
-                text = "${(value / 10)}%",
-                selected = value > 0
+            Text(
+                text = "${value / 10}%",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (value > 0) Gold else TextTertiary
             )
         }
         Slider(
@@ -362,9 +294,9 @@ private fun EffectSlider(
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
-                thumbColor = GoldLight,
+                thumbColor = Gold,
                 activeTrackColor = Gold,
-                inactiveTrackColor = SurfaceHighDark
+                inactiveTrackColor = BorderGoldSoft
             )
         )
     }

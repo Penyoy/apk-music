@@ -32,6 +32,7 @@ class AudioRepository @Inject constructor(
     fun searchSongs(query: String): Flow<List<Song>> = songDao.searchSongs(query)
     fun getSongsByAlbum(albumId: Long): Flow<List<Song>> = songDao.getSongsByAlbum(albumId)
     fun getSongsByArtist(artist: String): Flow<List<Song>> = songDao.getSongsByArtist(artist)
+    fun getSongsInFolder(folderPath: String): Flow<List<Song>> = songDao.getSongsInFolder(folderPath)
     fun getFavoriteSongs(): Flow<List<Song>> = songDao.getFavoriteSongs()
     fun getRecentlyPlayedSongs(): Flow<List<Song>> = songDao.getRecentlyPlayedSongs()
     fun getRecentlyAddedSongs(): Flow<List<Song>> = songDao.getRecentlyAddedSongs()

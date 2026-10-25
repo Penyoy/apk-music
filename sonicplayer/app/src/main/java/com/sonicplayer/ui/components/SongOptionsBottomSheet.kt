@@ -12,12 +12,12 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlaylistAdd
@@ -36,19 +36,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sonicplayer.data.model.MusicQueue
 import com.sonicplayer.data.model.Song
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
-import com.sonicplayer.ui.theme.SurfaceDark
-import com.sonicplayer.ui.theme.SurfaceElevatedDark
+import com.sonicplayer.ui.theme.InkSoft
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
+import com.sonicplayer.ui.theme.TextTertiary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +61,8 @@ fun SongOptionsBottomSheet(
     onCreateQueue: (String) -> Unit,
     onAddToPlaylist: () -> Unit,
     onToggleFavorite: () -> Unit,
-    isFavorite: Boolean
+    isFavorite: Boolean,
+    onRemoveFromPlaylist: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showQueueChoices by remember { mutableStateOf(false) }
@@ -71,46 +71,45 @@ fun SongOptionsBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = SurfaceDark,
-        scrimColor = Ink.copy(alpha = 0.72f),
+        containerColor = InkSoft,
+        scrimColor = Ink.copy(alpha = 0.7f),
         dragHandle = {
             Box(
                 modifier = Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .width(42.dp)
-                    .height(4.dp)
-                    .clip(CircleShape)
-                    .background(Gold.copy(alpha = 0.55f))
+                    .padding(top = 10.dp, bottom = 2.dp)
+                    .width(32.dp)
+                    .height(3.dp)
+                    .background(TextTertiary.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
             )
         }
     ) {
         Column(
             modifier = Modifier
                 .navigationBarsPadding()
-                .padding(bottom = 20.dp)
+                .padding(bottom = 8.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 22.dp, vertical = 14.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AlbumArt(
                     artwork = song.artworkUri,
                     contentDescription = song.album,
-                    modifier = Modifier.size(56.dp),
-                    shape = RoundedCornerShape(12.dp)
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(2.dp),
+                    noteSize = 18
                 )
-                Spacer(modifier = Modifier.width(14.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = song.displayTitle,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         color = TextPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "${song.displayArtist} · ${song.displayAlbum}",
                         style = MaterialTheme.typography.bodySmall,
@@ -121,47 +120,32 @@ fun SongOptionsBottomSheet(
                 }
             }
 
-            GoldDivider(modifier = Modifier.padding(horizontal = 22.dp))
+            GoldDivider()
 
             if (showQueueChoices) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 22.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Kembali",
-                        tint = TextSecondary,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clickable { showQueueChoices = false }
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Tambahkan ke antrean",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = TextPrimary
-                    )
-                }
-
+                SheetRow(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    title = "Tambah ke Antrean",
+                    subtitle = "Pilih antrean tujuan",
+                    tint = TextSecondary,
+                    onClick = { showQueueChoices = false }
+                )
                 val active = queues.firstOrNull { it.id == activeQueueId }
-                SheetOption(
+                SheetRow(
                     icon = Icons.Filled.Check,
-                    title = "Antrean aktif",
-                    subtitle = active?.displayName ?: "Antrean saat ini",
+                    title = active?.displayName ?: "Antrean aktif",
+                    subtitle = "Tambah ke akhir antrean aktif",
                     onClick = { onAddToQueue(null) }
                 )
                 queues.filter { it.id != activeQueueId }.forEach { queue ->
-                    SheetOption(
+                    SheetRow(
                         icon = Icons.Filled.QueueMusic,
                         title = queue.displayName,
-                        subtitle = "Tambahkan ke akhir antrean",
+                        subtitle = "Tambah ke akhir antrean ini",
                         onClick = { onAddToQueue(queue.id) }
                     )
                 }
-                SheetOption(
+                SheetRow(
                     icon = Icons.Filled.Add,
                     title = "Antrean baru",
                     subtitle = "Buat antrean lalu masukkan lagu ini",
@@ -171,32 +155,39 @@ fun SongOptionsBottomSheet(
                     }
                 )
             } else {
-                Spacer(modifier = Modifier.height(8.dp))
-                SheetOption(
+                SheetRow(
                     icon = Icons.Filled.PlaylistPlay,
-                    title = "Putar Berikutnya",
+                    title = "Putar berikutnya",
                     subtitle = "Sisipkan setelah lagu yang diputar",
                     onClick = onPlayNext
                 )
-                SheetOption(
+                SheetRow(
                     icon = Icons.Filled.QueueMusic,
-                    title = "Tambah ke Antrean",
+                    title = "Tambah ke antrean",
                     subtitle = "Pilih antrean tujuan",
                     onClick = { showQueueChoices = true }
                 )
-                SheetOption(
+                SheetRow(
                     icon = Icons.Filled.PlaylistAdd,
-                    title = "Tambah ke Playlist",
+                    title = "Tambah ke playlist",
                     subtitle = "Simpan ke koleksi pribadi",
                     onClick = onAddToPlaylist
                 )
-                SheetOption(
+                SheetRow(
                     icon = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    title = if (isFavorite) "Hapus dari Favorit" else "Tambah ke Favorit",
+                    title = if (isFavorite) "Hapus dari favorit" else "Tambah ke favorit",
                     subtitle = if (isFavorite) "Keluarkan dari koleksi favorit" else "Tandai sebagai lagu favorit",
-                    tint = if (isFavorite) Gold else GoldLight,
                     onClick = onToggleFavorite
                 )
+                if (onRemoveFromPlaylist != null) {
+                    SheetRow(
+                        icon = Icons.Filled.Delete,
+                        title = "Hapus dari playlist",
+                        subtitle = "Lagu tetap tersimpan di perangkat",
+                        tint = TextSecondary,
+                        onClick = onRemoveFromPlaylist
+                    )
+                }
             }
         }
     }
@@ -215,46 +206,40 @@ fun SongOptionsBottomSheet(
 }
 
 @Composable
-private fun SheetOption(
+private fun SheetRow(
     icon: ImageVector,
     title: String,
-    subtitle: String,
-    tint: androidx.compose.ui.graphics.Color = Gold,
+    subtitle: String? = null,
+    tint: Color = Gold,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 22.dp, vertical = 11.dp),
+            .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(SurfaceElevatedDark),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(14.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(21.dp)
+        )
+        Spacer(modifier = Modifier.width(18.dp))
         Column {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 color = TextPrimary
             )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
-            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+            }
         }
     }
 }

@@ -1,26 +1,18 @@
 package com.sonicplayer.ui.screens
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Equalizer
@@ -39,6 +30,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material.icons.filled.Settings
@@ -49,17 +41,15 @@ import androidx.compose.material.icons.filled.Subject
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -70,15 +60,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sonicplayer.data.model.Lyrics
 import com.sonicplayer.data.model.PlaybackState
@@ -89,11 +74,10 @@ import com.sonicplayer.ui.components.EmptyState
 import com.sonicplayer.ui.components.GoldDivider
 import com.sonicplayer.ui.components.PlayPauseIcon
 import com.sonicplayer.ui.components.PlaylistPickerDialog
+import com.sonicplayer.ui.theme.BorderGoldSoft
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldLight
 import com.sonicplayer.ui.theme.Ink
-import com.sonicplayer.ui.theme.SurfaceDark
-import com.sonicplayer.ui.theme.SurfaceHighDark
+import com.sonicplayer.ui.theme.InkSoft
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
 import com.sonicplayer.ui.theme.TextTertiary
@@ -107,6 +91,7 @@ fun NowPlayingScreen(
     val playbackState by viewModel.playbackState.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
+    val activeQueue by viewModel.activeQueue.collectAsState()
     val lyrics by viewModel.currentLyrics.collectAsState()
     val song = playbackState.currentSong
 
@@ -120,18 +105,30 @@ fun NowPlayingScreen(
     }
 
     if (song == null) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Ink)
                 .statusBarsPadding()
-                .navigationBarsPadding()
         ) {
-            IconButton(
-                onClick = { navController.navigateUp() },
-                modifier = Modifier.padding(8.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.KeyboardArrowDown, null, tint = Gold)
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = "Tutup",
+                        tint = TextPrimary
+                    )
+                }
+                Text(
+                    text = "Sedang diputar",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary
+                )
             }
             EmptyState(
                 message = "Belum ada lagu yang diputar.\nPilih lagu dari koleksimu.",
@@ -141,144 +138,267 @@ fun NowPlayingScreen(
         return
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Ink)
             .statusBarsPadding()
-            .navigationBarsPadding()
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            NowPlayingTopBar(
-                song = song,
-                isFavorite = favoriteIds.contains(song.id),
-                hasLyrics = lyrics != null,
-                onBack = { navController.navigateUp() },
-                onToggleFavorite = { viewModel.toggleFavorite(song.id) },
-                onShowLyrics = { showLyrics = true },
-                onMore = { showMenu = true }
-            )
-
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp)
-            ) {
-                val wide = maxWidth >= 720.dp || maxWidth > maxHeight
-                if (wide) {
-                    val artSize = minOf(maxWidth * 0.36f, maxHeight * 0.72f).coerceAtLeast(180.dp)
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.spacedBy(42.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier.weight(1f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            VinylArtwork(
-                                song = song,
-                                isPlaying = playbackState.isPlaying,
-                                size = artSize
-                            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = 4.dp, top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navController.navigateUp() }) {
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    contentDescription = "Tutup",
+                    tint = TextPrimary
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Sedang diputar",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = TextPrimary
+                )
+                Text(
+                    text = activeQueue?.displayName ?: "Antrean",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextTertiary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            IconButton(onClick = { viewModel.toggleFavorite(song.id) }) {
+                Icon(
+                    imageVector = if (favoriteIds.contains(song.id)) {
+                        Icons.Filled.Favorite
+                    } else {
+                        Icons.Filled.FavoriteBorder
+                    },
+                    contentDescription = "Favorit",
+                    tint = if (favoriteIds.contains(song.id)) Gold else TextSecondary
+                )
+            }
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.MoreVert,
+                        contentDescription = "Opsi",
+                        tint = TextSecondary
+                    )
+                }
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false },
+                    containerColor = InkSoft
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Tambah ke playlist", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Filled.PlaylistAdd, null, tint = Gold) },
+                        onClick = {
+                            showMenu = false
+                            showPlaylistPicker = true
                         }
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.Start
-                        ) {
-                            TrackInfo(song = song, centered = false)
-                            Spacer(modifier = Modifier.height(22.dp))
-                            ProgressSection(
-                                playbackState = playbackState,
-                                onSeek = { viewModel.seekTo(it) }
-                            )
-                            Spacer(modifier = Modifier.height(18.dp))
-                            NowPlayingControls(
-                                playbackState = playbackState,
-                                onPlayPause = { viewModel.playPause() },
-                                onNext = { viewModel.next() },
-                                onPrevious = { viewModel.previous() },
-                                onToggleShuffle = { viewModel.toggleShuffleMode() },
-                                onToggleRepeat = { viewModel.toggleRepeatMode() }
-                            )
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Lihat antrean", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Filled.QueueMusic, null, tint = Gold) },
+                        onClick = {
+                            showMenu = false
+                            navController.navigate("queue") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
-                    }
-                } else {
-                    val artSize = minOf(maxWidth - 56.dp, maxHeight * 0.34f).coerceAtLeast(130.dp)
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        VinylArtwork(
-                            song = song,
-                            isPlaying = playbackState.isPlaying,
-                            size = artSize
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        TrackInfo(song = song, centered = true)
-                        Spacer(modifier = Modifier.height(18.dp))
-                        ProgressSection(
-                            playbackState = playbackState,
-                            onSeek = { viewModel.seekTo(it) }
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        NowPlayingControls(
-                            playbackState = playbackState,
-                            onPlayPause = { viewModel.playPause() },
-                            onNext = { viewModel.next() },
-                            onPrevious = { viewModel.previous() },
-                            onToggleShuffle = { viewModel.toggleShuffleMode() },
-                            onToggleRepeat = { viewModel.toggleRepeatMode() }
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = "SonicPlayer · ♪",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextTertiary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Equalizer", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Filled.Equalizer, null, tint = Gold) },
+                        onClick = {
+                            showMenu = false
+                            navController.navigate("equalizer")
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Timer tidur", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Filled.Timer, null, tint = Gold) },
+                        onClick = {
+                            showMenu = false
+                            navController.navigate("sleep_timer")
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Pengaturan", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Filled.Settings, null, tint = Gold) },
+                        onClick = {
+                            showMenu = false
+                            navController.navigate("settings")
+                        }
+                    )
                 }
             }
         }
 
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { showMenu = false }
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            DropdownMenuItem(
-                text = { Text("Tambah ke Playlist", color = TextPrimary) },
-                leadingIcon = { Icon(Icons.Filled.PlaylistAdd, null, tint = Gold) },
-                onClick = {
-                    showMenu = false
-                    showPlaylistPicker = true
-                }
+            val artSize = minOf(maxWidth, maxHeight).coerceAtLeast(120.dp)
+            AlbumArt(
+                artwork = song.artworkUri,
+                contentDescription = song.album,
+                modifier = Modifier.size(artSize),
+                shape = RoundedCornerShape(2.dp),
+                noteSize = 56
             )
-            DropdownMenuItem(
-                text = { Text("Equalizer", color = TextPrimary) },
-                leadingIcon = { Icon(Icons.Filled.Equalizer, null, tint = Gold) },
-                onClick = {
-                    showMenu = false
-                    navController.navigate("equalizer")
-                }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        ) {
+            Text(
+                text = song.displayTitle,
+                style = MaterialTheme.typography.headlineSmall,
+                color = TextPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-            DropdownMenuItem(
-                text = { Text("Timer Tidur", color = TextPrimary) },
-                leadingIcon = { Icon(Icons.Filled.Timer, null, tint = Gold) },
-                onClick = {
-                    showMenu = false
-                    navController.navigate("sleep_timer")
-                }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "${song.displayArtist} · ${song.displayAlbum}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            DropdownMenuItem(
-                text = { Text("Pengaturan", color = TextPrimary) },
-                leadingIcon = { Icon(Icons.Filled.Settings, null, tint = Gold) },
-                onClick = {
-                    showMenu = false
-                    navController.navigate("settings")
-                }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            val duration = playbackState.duration.coerceAtLeast(0L)
+            val position = playbackState.position.coerceIn(0L, if (duration > 0) duration else Long.MAX_VALUE)
+            Slider(
+                value = if (duration > 0) position.toFloat() / duration else 0f,
+                onValueChange = { fraction ->
+                    if (duration > 0) viewModel.seekTo((fraction * duration).toLong())
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(
+                    thumbColor = Gold,
+                    activeTrackColor = Gold,
+                    inactiveTrackColor = BorderGoldSoft
+                )
             )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = Song.formatDuration(position),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextTertiary
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = Song.formatDuration(duration),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextTertiary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { viewModel.toggleShuffleMode() }) {
+                    Icon(
+                        imageVector = Icons.Filled.Shuffle,
+                        contentDescription = "Acak",
+                        tint = if (playbackState.shuffleMode) Gold else TextSecondary
+                    )
+                }
+                IconButton(onClick = { viewModel.previous() }) {
+                    Icon(
+                        imageVector = Icons.Filled.SkipPrevious,
+                        contentDescription = "Sebelumnya",
+                        tint = TextPrimary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                IconButton(
+                    onClick = { viewModel.playPause() },
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    PlayPauseIcon(
+                        isPlaying = playbackState.isPlaying,
+                        tint = Gold,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+                IconButton(onClick = { viewModel.next() }) {
+                    Icon(
+                        imageVector = Icons.Filled.SkipNext,
+                        contentDescription = "Berikutnya",
+                        tint = TextPrimary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                IconButton(onClick = { viewModel.toggleRepeatMode() }) {
+                    Icon(
+                        imageVector = if (playbackState.repeatMode == PlaybackState.REPEAT_MODE_ONE) {
+                            Icons.Filled.RepeatOne
+                        } else {
+                            Icons.Filled.Repeat
+                        },
+                        contentDescription = "Ulangi",
+                        tint = if (playbackState.repeatMode != PlaybackState.REPEAT_MODE_OFF) {
+                            Gold
+                        } else {
+                            TextSecondary
+                        }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (lyrics != null) {
+                    TextAction(
+                        icon = Icons.Filled.Subject,
+                        label = "Lirik",
+                        onClick = { showLyrics = true }
+                    )
+                }
+                TextAction(
+                    icon = Icons.Filled.QueueMusic,
+                    label = "Antrean",
+                    onClick = {
+                        navController.navigate("queue") {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+                TextAction(
+                    icon = Icons.Filled.Equalizer,
+                    label = "Equalizer",
+                    onClick = { navController.navigate("equalizer") }
+                )
+            }
         }
     }
 
@@ -312,8 +432,35 @@ fun NowPlayingScreen(
         LyricsSheet(
             lyrics = currentLyrics,
             positionMs = playbackState.position,
-            isPlaying = playbackState.isPlaying,
             onDismiss = { showLyrics = false }
+        )
+    }
+}
+
+@Composable
+private fun TextAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(2.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = TextSecondary,
+            modifier = Modifier.size(19.dp)
+        )
+        Spacer(modifier = Modifier.width(7.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary
         )
     }
 }
@@ -323,7 +470,6 @@ fun NowPlayingScreen(
 private fun LyricsSheet(
     lyrics: Lyrics,
     positionMs: Long,
-    isPlaying: Boolean,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -339,15 +485,15 @@ private fun LyricsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = SurfaceDark,
-        scrimColor = Ink.copy(alpha = 0.72f),
+        containerColor = InkSoft,
+        scrimColor = Ink.copy(alpha = 0.7f),
         dragHandle = {
             Box(
                 modifier = Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .width(42.dp)
-                    .height(4.dp)
-                    .background(Gold.copy(alpha = 0.55f), CircleShape)
+                    .padding(top = 10.dp, bottom = 2.dp)
+                    .width(32.dp)
+                    .height(3.dp)
+                    .background(TextTertiary.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
             )
         }
     ) {
@@ -359,12 +505,12 @@ private fun LyricsSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 22.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Lirik",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                     modifier = Modifier.weight(1f)
                 )
@@ -374,14 +520,14 @@ private fun LyricsSheet(
                     color = if (lyrics.synced) Gold else TextTertiary
                 )
             }
-            GoldDivider(modifier = Modifier.padding(horizontal = 22.dp))
+            GoldDivider()
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 420.dp),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 itemsIndexed(lyrics.lines) { index, line ->
                     val active = lyrics.synced && index == activeIndex
@@ -393,318 +539,12 @@ private fun LyricsSheet(
                             MaterialTheme.typography.bodyLarge
                         },
                         color = if (active) Gold else TextSecondary,
-                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+                        fontWeight = if (active) FontWeight.Medium else FontWeight.Normal,
+                        textAlign = TextAlign.Start,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
         }
     }
-}
-
-@Composable
-private fun NowPlayingTopBar(
-    song: Song,
-    isFavorite: Boolean,
-    hasLyrics: Boolean,
-    onBack: () -> Unit,
-    onToggleFavorite: () -> Unit,
-    onShowLyrics: () -> Unit,
-    onMore: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.Filled.KeyboardArrowDown,
-                contentDescription = "Tutup",
-                tint = TextPrimary
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "SEDANG DIPUTAR",
-                style = MaterialTheme.typography.labelSmall,
-                color = Gold,
-                letterSpacing = 2.4.sp
-            )
-            Text(
-                text = song.displayAlbum,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        if (hasLyrics) {
-            IconButton(onClick = onShowLyrics) {
-                Icon(
-                    imageVector = Icons.Filled.Subject,
-                    contentDescription = "Lirik",
-                    tint = Gold
-                )
-            }
-        }
-        IconButton(onClick = onToggleFavorite) {
-            Icon(
-                imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                contentDescription = if (isFavorite) "Hapus favorit" else "Tambah favorit",
-                tint = if (isFavorite) Gold else TextSecondary
-            )
-        }
-        IconButton(onClick = onMore) {
-            Icon(Icons.Filled.MoreVert, contentDescription = "Opsi", tint = TextPrimary)
-        }
-    }
-}
-
-@Composable
-private fun VinylArtwork(
-    song: Song,
-    isPlaying: Boolean,
-    size: Dp
-) {
-    val rotation = remember { Animatable(0f) }
-
-    LaunchedEffect(isPlaying, song.id) {
-        if (isPlaying) {
-            while (true) {
-                rotation.animateTo(
-                    targetValue = rotation.value + 360f,
-                    animationSpec = tween(24_000, easing = LinearEasing)
-                )
-                rotation.snapTo(rotation.value % 360f)
-            }
-        }
-    }
-
-    val pulse = rememberInfiniteTransition(label = "pulse")
-    val glow by pulse.animateFloat(
-        initialValue = 0.92f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow"
-    )
-
-    Box(
-        modifier = Modifier
-            .size(size + 36.dp)
-            .graphicsLayer { scaleX = if (isPlaying) glow else 1f; scaleY = if (isPlaying) glow else 1f }
-            .background(Gold.copy(alpha = 0.05f), CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(size)
-                .graphicsLayer { rotationZ = rotation.value }
-                .background(Color(0xFF14110C), CircleShape)
-                .border(1.5.dp, Gold.copy(alpha = 0.55f), CircleShape)
-                .padding(size * 0.14f),
-            contentAlignment = Alignment.Center
-        ) {
-            AlbumArt(
-                artwork = song.artworkUri,
-                contentDescription = song.album,
-                modifier = Modifier.fillMaxSize(),
-                shape = CircleShape,
-                noteSize = 48
-            )
-            Box(
-                modifier = Modifier
-                    .size(size * 0.075f)
-                    .background(Ink, CircleShape)
-                    .border(1.dp, Gold.copy(alpha = 0.8f), CircleShape)
-            )
-        }
-    }
-}
-
-@Composable
-private fun TrackInfo(song: Song, centered: Boolean) {
-    Column(
-        horizontalAlignment = if (centered) Alignment.CenterHorizontally else Alignment.Start,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = song.displayTitle,
-            style = MaterialTheme.typography.headlineMedium,
-            color = TextPrimary,
-            textAlign = if (centered) TextAlign.Center else TextAlign.Start,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(5.dp))
-        Text(
-            text = song.displayArtist,
-            style = MaterialTheme.typography.bodyLarge,
-            color = Gold,
-            textAlign = if (centered) TextAlign.Center else TextAlign.Start,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = song.displayAlbum,
-            style = MaterialTheme.typography.bodySmall,
-            color = TextSecondary,
-            textAlign = if (centered) TextAlign.Center else TextAlign.Start,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun ProgressSection(
-    playbackState: PlaybackState,
-    onSeek: (Long) -> Unit
-) {
-    var isDragging by remember { mutableStateOf(false) }
-    var dragValue by remember { mutableStateOf(0f) }
-
-    val currentProgress = if (isDragging) {
-        dragValue
-    } else {
-        playbackState.progress.coerceIn(0f, 1f)
-    }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Slider(
-            value = currentProgress,
-            onValueChange = {
-                isDragging = true
-                dragValue = it
-            },
-            onValueChangeFinished = {
-                onSeek((dragValue * playbackState.duration).toLong())
-                isDragging = false
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = SliderDefaults.colors(
-                thumbColor = GoldLight,
-                activeTrackColor = Gold,
-                inactiveTrackColor = SurfaceHighDark
-            )
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = formatTime((currentProgress * playbackState.duration).toLong()),
-                style = MaterialTheme.typography.labelMedium,
-                color = TextSecondary
-            )
-            Text(
-                text = playbackState.durationText,
-                style = MaterialTheme.typography.labelMedium,
-                color = TextSecondary
-            )
-        }
-    }
-}
-
-@Composable
-private fun NowPlayingControls(
-    playbackState: PlaybackState,
-    onPlayPause: () -> Unit,
-    onNext: () -> Unit,
-    onPrevious: () -> Unit,
-    onToggleShuffle: () -> Unit,
-    onToggleRepeat: () -> Unit
-) {
-    val pulse = rememberInfiniteTransition(label = "playPulse")
-    val playScale by pulse.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.06f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "playScale"
-    )
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        IconButton(onClick = onToggleShuffle) {
-            Icon(
-                imageVector = Icons.Filled.Shuffle,
-                contentDescription = "Acak",
-                tint = if (playbackState.shuffleMode) Gold else TextTertiary
-            )
-        }
-
-        IconButton(onClick = onPrevious, modifier = Modifier.size(44.dp)) {
-            Icon(
-                imageVector = Icons.Filled.SkipPrevious,
-                contentDescription = "Sebelumnya",
-                tint = TextPrimary,
-                modifier = Modifier.size(30.dp)
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .size(78.dp)
-                .graphicsLayer { scaleX = playScale; scaleY = playScale }
-                .background(Gold.copy(alpha = 0.10f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            FilledIconButton(
-                onClick = onPlayPause,
-                modifier = Modifier.size(64.dp),
-                shape = CircleShape,
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = Gold,
-                    contentColor = Ink
-                )
-            ) {
-                PlayPauseIcon(
-                    isPlaying = playbackState.isPlaying,
-                    modifier = Modifier.size(34.dp)
-                )
-            }
-        }
-
-        IconButton(onClick = onNext, modifier = Modifier.size(44.dp)) {
-            Icon(
-                imageVector = Icons.Filled.SkipNext,
-                contentDescription = "Berikutnya",
-                tint = TextPrimary,
-                modifier = Modifier.size(30.dp)
-            )
-        }
-
-        IconButton(onClick = onToggleRepeat) {
-            Icon(
-                imageVector = if (playbackState.repeatMode == PlaybackState.REPEAT_MODE_ONE) {
-                    Icons.Filled.RepeatOne
-                } else {
-                    Icons.Filled.Repeat
-                },
-                contentDescription = "Ulangi",
-                tint = if (playbackState.repeatMode != PlaybackState.REPEAT_MODE_OFF) Gold else TextTertiary
-            )
-        }
-    }
-}
-
-private fun formatTime(millis: Long): String {
-    val totalSeconds = (millis.coerceAtLeast(0) / 1000)
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "%d:%02d".format(minutes, seconds)
 }

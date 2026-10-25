@@ -1,23 +1,7 @@
 package com.sonicplayer.ui.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -50,15 +33,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -72,41 +51,34 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sonicplayer.R
 import com.sonicplayer.data.model.Song
-import com.sonicplayer.ui.theme.BorderGold
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.GoldLight
-import com.sonicplayer.ui.theme.SurfaceElevatedDark
+import com.sonicplayer.ui.theme.Ink
+import com.sonicplayer.ui.theme.SurfaceDark
 import com.sonicplayer.ui.theme.SurfaceVariantDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
 import com.sonicplayer.ui.theme.TextTertiary
 
-/**
- * A minimal gold "♪" logo mark used across the app.
- */
+/** Flat one-line logo mark, used only where the app identifies itself. */
 @Composable
 fun SonicLogo(
     modifier: Modifier = Modifier,
     size: Dp = 40.dp,
-    showBorder: Boolean = true
+    showBorder: Boolean = false
 ) {
     Box(
         modifier = modifier
             .size(size)
-            .clip(CircleShape)
-            .background(SurfaceElevatedDark)
-            .then(
-                if (showBorder) Modifier.border(1.dp, Gold, CircleShape)
-                else Modifier
-            ),
+            .clip(RoundedCornerShape(4.dp))
+            .background(SurfaceDark),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "♪",
-            color = GoldLight,
-            fontFamily = FontFamily.Serif,
+            color = Gold,
+            fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.Bold,
-            fontSize = (size.value * 0.44f).sp
+            fontSize = (size.value * 0.46f).sp
         )
     }
 }
@@ -128,39 +100,36 @@ fun SonicTopBar(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Kembali",
-                        tint = Gold
+                        tint = TextPrimary
                     )
-                }
-            } else {
-                Box(modifier = Modifier.padding(start = 16.dp)) {
-                    SonicLogo(size = 36.dp)
                 }
             }
         },
         title = {
             Column {
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Gold,
-                        letterSpacing = 1.8.sp
-                    )
-                }
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     color = TextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         },
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
-            navigationIconContentColor = Gold,
-            actionIconContentColor = Gold,
+            navigationIconContentColor = TextPrimary,
+            actionIconContentColor = TextPrimary,
             titleContentColor = TextPrimary
         )
     )
@@ -171,13 +140,14 @@ fun GoldDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(1.dp)
-            .background(BorderGold)
+            .height(0.5.dp)
+            .background(Color(0xFF232323))
     )
 }
 
 /**
- * Animated equaliser bars shown next to the currently playing track.
+ * Static bars marking the current track. No animation: the marker is information,
+ * not decoration.
  */
 @Composable
 fun PlayingIndicator(
@@ -185,33 +155,18 @@ fun PlayingIndicator(
     color: Color = Gold,
     barCount: Int = 3
 ) {
-    val transition = rememberInfiniteTransition(label = "playing")
-    val heights = List(barCount) { index ->
-        transition.animateFloat(
-            initialValue = 0.25f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(
-                    durationMillis = 360 + index * 120,
-                    easing = FastOutSlowInEasing
-                ),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "bar$index"
-        )
-    }
-
+    val heights = listOf(0.55f, 1f, 0.35f)
     Row(
-        modifier = modifier.height(14.dp),
+        modifier = modifier.height(13.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.Bottom
     ) {
-        heights.forEach { height ->
+        repeat(barCount) { index ->
             Box(
                 modifier = Modifier
-                    .width(2.5.dp)
-                    .height(14.dp * height.value.coerceIn(0.2f, 1f))
-                    .background(color, RoundedCornerShape(2.dp))
+                    .width(2.dp)
+                    .height(13.dp * heights[index % heights.size])
+                    .background(color, RoundedCornerShape(1.dp))
             )
         }
     }
@@ -223,54 +178,42 @@ fun PlayPauseIcon(
     modifier: Modifier = Modifier,
     tint: Color = LocalContentColor.current
 ) {
-    AnimatedContent(
-        targetState = isPlaying,
-        transitionSpec = {
-            (fadeIn(tween(160)) + scaleIn(tween(160), initialScale = 0.7f))
-                .togetherWith(fadeOut(tween(120)) + scaleOut(tween(120), targetScale = 0.8f))
-        },
-        label = "playPause"
-    ) { playing ->
-        Icon(
-            imageVector = if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-            contentDescription = if (playing) "Jeda" else "Putar",
-            tint = tint,
-            modifier = modifier
-        )
-    }
+    Icon(
+        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+        contentDescription = if (isPlaying) "Jeda" else "Putar",
+        tint = tint,
+        modifier = modifier
+    )
 }
 
-/**
- * Album artwork with a gold-tinted musical-note placeholder.
- */
+/** Square album artwork with a plain placeholder. */
 @Composable
 fun AlbumArt(
     artwork: Any?,
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
-    shape: Shape = RoundedCornerShape(14.dp),
+    shape: Shape = RoundedCornerShape(4.dp),
     noteSize: Int = 24
 ) {
     val context = LocalContext.current
     Box(
         modifier = modifier
             .clip(shape)
-            .background(SurfaceVariantDark)
-            .border(1.dp, Gold.copy(alpha = 0.16f), shape),
+            .background(SurfaceVariantDark),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "♪",
-            color = Gold.copy(alpha = 0.5f),
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.Bold,
+            color = TextTertiary,
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Normal,
             fontSize = noteSize.sp
         )
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(artwork)
                 .size(512)
-                .crossfade(220)
+                .crossfade(120)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fallback(R.drawable.placeholder)
@@ -292,30 +235,20 @@ fun SongRow(
     modifier: Modifier = Modifier,
     artwork: Any? = song.artworkUri
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val shape = RoundedCornerShape(18.dp)
-    val container = if (isPlaying) Gold.copy(alpha = 0.08f) else Color.Transparent
-
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 3.dp)
-            .pressScale(interactionSource)
-            .clip(shape)
-            .background(container)
-            .then(
-                if (isPlaying) Modifier.border(1.dp, Gold.copy(alpha = 0.25f), shape)
-                else Modifier
-            )
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 9.dp),
+            .clickable(onClick = onClick)
+            .background(if (isPlaying) Gold.copy(alpha = 0.06f) else Color.Transparent)
+            .padding(horizontal = 16.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AlbumArt(
             artwork = artwork,
             contentDescription = song.album,
-            modifier = Modifier.size(52.dp),
-            shape = RoundedCornerShape(13.dp)
+            modifier = Modifier.size(46.dp),
+            shape = RoundedCornerShape(3.dp),
+            noteSize = 18
         )
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -324,18 +257,18 @@ fun SongRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = song.displayTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (isPlaying) GoldLight else TextPrimary,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (isPlaying) Gold else TextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
                 )
                 if (isPlaying) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(7.dp))
                     PlayingIndicator()
                 }
             }
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(1.dp))
             Text(
                 text = "${song.displayArtist} · ${song.displayAlbum}",
                 style = MaterialTheme.typography.bodySmall,
@@ -358,7 +291,7 @@ fun SongRow(
                     imageVector = Icons.Filled.Favorite,
                     contentDescription = "Favorit",
                     tint = Gold,
-                    modifier = Modifier.size(13.dp)
+                    modifier = Modifier.size(12.dp)
                 )
             }
         }
@@ -390,30 +323,21 @@ fun EmptyState(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(76.dp)
-                    .clip(CircleShape)
-                    .background(Gold.copy(alpha = 0.06f))
-                    .border(1.dp, Gold.copy(alpha = 0.25f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = Gold.copy(alpha = 0.75f)
-                )
-            }
-            Spacer(modifier = Modifier.height(18.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = TextTertiary
+            )
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             if (actionLabel != null && onAction != null) {
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 OutlinedButton(onClick = onAction) {
                     Text(actionLabel, color = Gold)
                 }
@@ -432,24 +356,23 @@ fun SectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             color = TextPrimary,
             modifier = Modifier.weight(1f)
         )
         if (actionLabel != null && onAction != null) {
             Text(
                 text = actionLabel,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = Gold,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = onAction)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
             )
         }
     }
@@ -464,53 +387,40 @@ fun SurfacePill(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(50),
-        color = if (selected) Gold.copy(alpha = 0.16f) else Color.Transparent,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (selected) Gold.copy(alpha = 0.6f) else BorderGold
-        )
+        shape = RoundedCornerShape(3.dp),
+        color = if (selected) Gold.copy(alpha = 0.14f) else SurfaceDark,
+        border = null
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = if (selected) Gold else TextSecondary,
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(13.dp)
                 )
             }
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = if (selected) Gold else TextSecondary
             )
         }
     }
 }
 
+/** Kept for source compatibility; press animation was removed on purpose. */
 fun Modifier.pressScale(
-    interactionSource: MutableInteractionSource,
-    pressedScale: Float = 0.97f
-): Modifier = composed {
-    val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) pressedScale else 1f,
-        animationSpec = tween(120),
-        label = "pressScale"
-    )
-    graphicsLayer {
-        scaleX = scale
-        scaleY = scale
-    }
-}
+    interactionSource: androidx.compose.foundation.interaction.MutableInteractionSource,
+    pressedScale: Float = 1f
+): Modifier = this
 
 @Composable
-fun SongCover(song: Song, modifier: Modifier = Modifier, shape: Shape = RoundedCornerShape(14.dp)) {
+fun SongCover(song: Song, modifier: Modifier = Modifier, shape: Shape = RoundedCornerShape(4.dp)) {
     AlbumArt(
         artwork = song.artworkUri,
         modifier = modifier,
