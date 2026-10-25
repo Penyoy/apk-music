@@ -1,30 +1,39 @@
 package com.sonicplayer.ui.components
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import coil.compose.AsyncImage
+import androidx.core.graphics.drawable.toBitmap
+import coil.imageLoader
 import coil.request.ImageRequest
-import coil.size.Size
-import coil.transform.BitmapTransformation
+import coil.request.SuccessResult
 import com.sonicplayer.ui.theme.Ink
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The active artwork, heavily blurred and desaturated as a background wash.
  *
- * A custom Coil transformation is used instead of Modifier.blur so the effect also
- * works on API 24-30. Callers should pass [com.sonicplayer.artwork.ArtworkProvider.rawSongUri]
- * so a missing track artwork leaves the screen solid black instead of blurring the
- * placeholder tile.
+ * The blur is done in-app so it also works on API 24-30. Callers should pass
+ * [com.sonicplayer.artwork.ArtworkProvider.rawSongUri] so a missing track artwork
+ * leaves the screen solid black instead of blurring the placeholder tile.
  */
 @Composable
 fun AmbientArtwork(
@@ -32,16 +41,31 @@ fun AmbientArtwork(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    Box(modifier = modifier.background(Ink)) {
-        if (artwork != null) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
+    var blurred by remember(artwork) { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(artwork) {
+        blurred = null
+        if (artwork == null) return@LaunchedEffect
+        val bitmap = withContext(Dispatchers.IO) {
+            runCatching {
+                val request = ImageRequest.Builder(context)
                     .data(artwork)
                     .size(256)
                     .allowHardware(false)
-                    .transformations(BlurTransformation())
-                    .crossfade(false)
-                    .build(),
+                    .build()
+                val result = context.imageLoader.execute(request)
+                val drawable = (result as? SuccessResult)?.drawable
+                    ?: return@runCatching null
+                blurBitmap(drawable.toBitmap())
+            }.getOrNull()
+        }
+        blurred = bitmap?.asImageBitmap()
+    }
+
+    Box(modifier = modifier.background(Ink)) {
+        blurred?.let { image ->
+            Image(
+                bitmap = image,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
@@ -67,23 +91,15 @@ fun AmbientArtwork(
     }
 }
 
-private class BlurTransformation(
-    private val radius: Int = 12,
-    private val sample: Int = 4
-) : BitmapTransformation() {
-
-    override fun key(): String = "sonic_ambient_blur_${radius}_$sample"
-
-    override suspend fun transform(input: Bitmap, size: Size): Bitmap {
-        val width = (input.width / sample).coerceAtLeast(1)
-        val height = (input.height / sample).coerceAtLeast(1)
-        val bitmap = Bitmap.createScaledBitmap(input, width, height, true)
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-        boxBlur(pixels, width, height, radius)
-        bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
-        return bitmap
-    }
+private fun blurBitmap(source: Bitmap): Bitmap {
+    val width = (source.width / 4).coerceAtLeast(1)
+    val height = (source.height / 4).coerceAtLeast(1)
+    val bitmap = Bitmap.createScaledBitmap(source, width, height, true)
+    val pixels = IntArray(width * height)
+    bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+    boxBlur(pixels, width, height, 12)
+    bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+    return bitmap
 }
 
 private fun boxBlur(pixels: IntArray, width: Int, height: Int, radius: Int) {
