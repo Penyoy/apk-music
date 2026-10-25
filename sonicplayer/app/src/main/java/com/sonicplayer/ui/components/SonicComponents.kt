@@ -28,7 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -44,7 +43,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -52,36 +50,10 @@ import coil.request.ImageRequest
 import com.sonicplayer.R
 import com.sonicplayer.data.model.Song
 import com.sonicplayer.ui.theme.Gold
-import com.sonicplayer.ui.theme.Ink
-import com.sonicplayer.ui.theme.SurfaceDark
 import com.sonicplayer.ui.theme.SurfaceVariantDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
 import com.sonicplayer.ui.theme.TextTertiary
-
-/** Flat one-line logo mark, used only where the app identifies itself. */
-@Composable
-fun SonicLogo(
-    modifier: Modifier = Modifier,
-    size: Dp = 40.dp,
-    showBorder: Boolean = false
-) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(RoundedCornerShape(4.dp))
-            .background(SurfaceDark),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "♪",
-            color = Gold,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Bold,
-            fontSize = (size.value * 0.46f).sp
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -344,87 +316,4 @@ fun EmptyState(
             }
         }
     }
-}
-
-@Composable
-fun SectionHeader(
-    title: String,
-    modifier: Modifier = Modifier,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = TextPrimary,
-            modifier = Modifier.weight(1f)
-        )
-        if (actionLabel != null && onAction != null) {
-            Text(
-                text = actionLabel,
-                style = MaterialTheme.typography.labelMedium,
-                color = Gold,
-                modifier = Modifier
-                    .clickable(onClick = onAction)
-                    .padding(horizontal = 6.dp, vertical = 4.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun SurfacePill(
-    text: String,
-    modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-    selected: Boolean = false
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(3.dp),
-        color = if (selected) Gold.copy(alpha = 0.14f) else SurfaceDark,
-        border = null
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = if (selected) Gold else TextSecondary,
-                    modifier = Modifier.size(13.dp)
-                )
-            }
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (selected) Gold else TextSecondary
-            )
-        }
-    }
-}
-
-/** Kept for source compatibility; press animation was removed on purpose. */
-fun Modifier.pressScale(
-    interactionSource: androidx.compose.foundation.interaction.MutableInteractionSource,
-    pressedScale: Float = 1f
-): Modifier = this
-
-@Composable
-fun SongCover(song: Song, modifier: Modifier = Modifier, shape: Shape = RoundedCornerShape(4.dp)) {
-    AlbumArt(
-        artwork = song.artworkUri,
-        modifier = modifier,
-        contentDescription = song.album,
-        shape = shape
-    )
 }

@@ -30,9 +30,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sonicplayer.data.model.Playlist
+import com.sonicplayer.ui.theme.BorderGoldSoft
 import com.sonicplayer.ui.theme.Gold
 import com.sonicplayer.ui.theme.SurfaceDark
-import com.sonicplayer.ui.theme.SurfaceElevatedDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
 
@@ -46,11 +46,11 @@ fun CreatePlaylistDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDark,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(8.dp),
         title = {
             Text(
                 text = "Playlist Baru",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = TextPrimary
             )
         },
@@ -67,10 +67,10 @@ fun CreatePlaylistDialog(
                     onValueChange = { name = it },
                     label = { Text("Nama playlist") },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(4.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Gold,
-                        unfocusedBorderColor = Gold.copy(alpha = 0.3f),
+                        unfocusedBorderColor = BorderGoldSoft,
                         focusedLabelColor = Gold,
                         cursorColor = Gold
                     ),
@@ -104,11 +104,11 @@ fun PlaylistPickerDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDark,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(8.dp),
         title = {
             Text(
                 text = "Tambah ke Playlist",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = TextPrimary
             )
         },
@@ -125,7 +125,7 @@ fun PlaylistPickerDialog(
                         androidx.compose.foundation.layout.Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(2.dp))
                                 .clickable { onPlaylistSelected(playlist.id) }
                                 .padding(vertical = 10.dp, horizontal = 6.dp),
                             verticalAlignment = Alignment.CenterVertically

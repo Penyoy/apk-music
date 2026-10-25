@@ -175,9 +175,6 @@ class MainViewModel @Inject constructor(
     fun getSongsByArtist(artist: String): Flow<List<Song>> =
         audioRepository.getSongsByArtist(artist)
 
-    fun getSongsInFolder(folderPath: String): Flow<List<Song>> =
-        audioRepository.getSongsInFolder("$folderPath/")
-
     fun getSongsInPlaylist(playlistId: Long): Flow<List<Song>> =
         playlistRepository.getSongsInPlaylist(playlistId)
 

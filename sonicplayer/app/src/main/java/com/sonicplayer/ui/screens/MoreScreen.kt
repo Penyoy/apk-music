@@ -103,13 +103,6 @@ fun MoreScreen(
                 subtitle = "Tentang aplikasi dan informasi penyimpanan",
                 onClick = { navController.navigate("settings") }
             )
-
-            Text(
-                text = "SonicPlayer 1.1.0",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextTertiary,
-                modifier = Modifier.padding(start = 16.dp, top = 24.dp)
-            )
         }
     }
 }

@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -60,7 +59,6 @@ import com.sonicplayer.ui.components.SonicTopBar
 import com.sonicplayer.ui.theme.Gold
 import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceDark
-import com.sonicplayer.ui.theme.SurfaceElevatedDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
 import com.sonicplayer.ui.theme.TextTertiary
@@ -199,7 +197,7 @@ fun QueueScreen(
         AlertDialog(
             onDismissRequest = { queueToDelete = null },
             containerColor = SurfaceDark,
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(8.dp),
             title = {
                 Text("Hapus Antrean?", color = TextPrimary)
             },
@@ -229,7 +227,7 @@ fun QueueScreen(
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
             containerColor = SurfaceDark,
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(8.dp),
             title = {
                 Text("Kosongkan Antrean?", color = TextPrimary)
             },

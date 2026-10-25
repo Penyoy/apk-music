@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -44,14 +43,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sonicplayer.data.model.MusicQueue
+import com.sonicplayer.ui.theme.BorderGoldSoft
 import com.sonicplayer.ui.theme.Gold
 import com.sonicplayer.ui.theme.Ink
 import com.sonicplayer.ui.theme.SurfaceDark
-import com.sonicplayer.ui.theme.SurfaceElevatedDark
 import com.sonicplayer.ui.theme.TextPrimary
 import com.sonicplayer.ui.theme.TextSecondary
 import com.sonicplayer.ui.theme.TextTertiary
@@ -78,10 +76,10 @@ fun QueuePickerSheet(
         dragHandle = {
             Box(
                 modifier = Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .width(42.dp)
-                    .height(4.dp)
-                    .background(Gold.copy(alpha = 0.55f), CircleShape)
+                    .padding(top = 10.dp, bottom = 2.dp)
+                    .width(32.dp)
+                    .height(3.dp)
+                    .background(TextTertiary.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
             )
         }
     ) {
@@ -144,21 +142,13 @@ private fun QueuePickerRow(
             .padding(horizontal = 20.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(SurfaceElevatedDark),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Filled.QueueMusic,
-                contentDescription = null,
-                tint = if (active) Gold else TextTertiary,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(13.dp))
+        Icon(
+            imageVector = Icons.Filled.QueueMusic,
+            contentDescription = null,
+            tint = if (active) Gold else TextSecondary,
+            modifier = Modifier.size(21.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = queue.displayName,
@@ -233,7 +223,7 @@ fun QueueNameDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDark,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(8.dp),
         title = {
             Text(
                 text = title,
@@ -247,10 +237,10 @@ fun QueueNameDialog(
                 onValueChange = { name = it },
                 label = { Text("Nama antrean") },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(4.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Gold,
-                    unfocusedBorderColor = Gold.copy(alpha = 0.3f),
+                    unfocusedBorderColor = BorderGoldSoft,
                     focusedLabelColor = Gold,
                     cursorColor = Gold
                 ),
