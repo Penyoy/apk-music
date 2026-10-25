@@ -203,8 +203,7 @@ private fun PlaylistRow(
             }
             DropdownMenu(
                 expanded = showMenu,
-                onDismissRequest = { showMenu = false },
-                containerColor = SurfaceDark
+                onDismissRequest = { showMenu = false }
             ) {
                 DropdownMenuItem(
                     text = { Text("Hapus playlist", color = TextPrimary) },

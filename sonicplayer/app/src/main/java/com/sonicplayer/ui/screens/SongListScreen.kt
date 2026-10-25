@@ -175,8 +175,7 @@ private fun ListControlRow(
                 }
                 DropdownMenu(
                     expanded = showSort,
-                    onDismissRequest = { showSort = false },
-                    containerColor = SurfaceDark
+                    onDismissRequest = { showSort = false }
                 ) {
                     MainViewModel.SortOption.values().forEach { option ->
                         DropdownMenuItem(

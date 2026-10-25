@@ -192,8 +192,7 @@ fun NowPlayingScreen(
                 }
                 DropdownMenu(
                     expanded = showMenu,
-                    onDismissRequest = { showMenu = false },
-                    containerColor = InkSoft
+                    onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
                         text = { Text("Tambah ke playlist", color = TextPrimary) },
