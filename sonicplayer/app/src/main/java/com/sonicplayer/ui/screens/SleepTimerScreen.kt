@@ -122,7 +122,7 @@ fun SleepTimerScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(2.dp))
-                                    .background(if (selected) Gold.copy(alpha = 0.16f) else SurfaceDark)
+                                    .background(if (selected) Gold.copy(alpha = 0.10f) else SurfaceDark)
                                     .clickable { selectedMinutes = minutes }
                                     .padding(vertical = 13.dp),
                                 contentAlignment = Alignment.Center

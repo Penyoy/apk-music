@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="512dp"
+    android:height="512dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Quiet graphite tile; the mark stays legible even at 46dp. -->
+    <path
+        android:fillColor="#141416"
+        android:pathData="M0,0h512v512h-512z" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#C2A36B"
+        android:strokeAlpha="0.10"
+        android:strokeWidth="3"
+        android:pathData="M256,56 a200,200 0 1,0 0,400 a200,200 0 1,0 0,-400" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#C2A36B"
+        android:strokeAlpha="0.07"
+        android:strokeWidth="2"
+        android:pathData="M256,104 a152,152 0 1,0 0,304 a152,152 0 1,0 0,-304" />
+
+    <!-- Pulse-play mark. -->
+    <path
+        android:fillColor="#C2A36B"
+        android:fillAlpha="0.64"
+        android:fillType="evenOdd"
+        android:pathData="M308,256 a78,78 0 1,0 -156,0 a78,78 0 1,0 156,0 Z M214,214 L214,298 L292,256 Z" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#C2A36B"
+        android:strokeAlpha="0.42"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:pathData="M330,202 C368,222 368,290 330,310" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#C2A36B"
+        android:strokeAlpha="0.20"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M360,176 C414,204 414,308 360,336" />
+</vector>

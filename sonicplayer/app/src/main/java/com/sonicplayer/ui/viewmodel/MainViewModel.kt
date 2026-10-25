@@ -5,7 +5,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sonicplayer.data.model.Album
 import com.sonicplayer.data.model.Artist
-import com.sonicplayer.data.model.Lyrics
 import com.sonicplayer.data.model.MusicFolder
 import com.sonicplayer.data.model.MusicQueue
 import com.sonicplayer.data.model.PlaybackState
@@ -29,8 +28,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -98,12 +97,27 @@ class MainViewModel @Inject constructor(
     val queues: StateFlow<List<MusicQueue>> = playbackRepository.queues
     val activeQueue: StateFlow<MusicQueue?> = playbackRepository.activeQueue
 
-    /** Lyrics for the current track, loaded lazily when the track changes. */
-    val currentLyrics: StateFlow<Lyrics?> = playbackState
+    /** Lyrics for the current track, with an explicit loading phase. */
+    val currentLyrics: StateFlow<LyricsUiState> = playbackState
         .map { it.currentSong }
         .distinctUntilChanged { old, new -> old?.id == new?.id }
-        .mapLatest { song -> song?.let { lyricsRepository.getLyrics(it) } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .transformLatest { song ->
+            if (song == null) {
+                emit(LyricsUiState.Unavailable)
+            } else {
+                emit(LyricsUiState.Loading)
+                val lyrics = lyricsRepository.getLyrics(song)
+                emit(
+                    if (lyrics == null) LyricsUiState.Unavailable
+                    else LyricsUiState.Ready(lyrics)
+                )
+            }
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            LyricsUiState.Unavailable
+        )
 
     val sleepTimerManager = SleepTimerManager()
 

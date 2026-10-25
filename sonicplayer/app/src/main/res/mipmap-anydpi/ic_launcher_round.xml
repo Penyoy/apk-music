@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Legacy round launcher icon for API 24-25. -->
+    <path
+        android:fillColor="#0A0A0B"
+        android:pathData="M54,0 a54,54 0 1,0 0,108 a54,54 0 1,0 0,-108" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#C2A36B"
+        android:strokeAlpha="0.16"
+        android:strokeWidth="1.4"
+        android:pathData="M54,18 a36,36 0 1,0 0,72 a36,36 0 1,0 0,-72" />
+
+    <path
+        android:fillColor="#C2A36B"
+        android:fillType="evenOdd"
+        android:pathData="M65,54 a19,19 0 1,0 -38,0 a19,19 0 1,0 38,0 Z M37,41 L37,67 L58,54 Z" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#C2A36B"
+        android:strokeAlpha="0.55"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round"
+        android:pathData="M72,40 C80,46 80,62 72,68" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#C2A36B"
+        android:strokeAlpha="0.28"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M80,32 C90,40 90,68 80,76" />
+</vector>

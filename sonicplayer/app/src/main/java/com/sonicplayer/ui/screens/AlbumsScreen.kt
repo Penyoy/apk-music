@@ -82,8 +82,7 @@ private fun AlbumRow(album: Album, onClick: () -> Unit) {
             artwork = album.coverUri,
             contentDescription = album.displayTitle,
             modifier = Modifier.size(48.dp),
-            shape = RoundedCornerShape(2.dp),
-            noteSize = 18
+            shape = RoundedCornerShape(2.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {

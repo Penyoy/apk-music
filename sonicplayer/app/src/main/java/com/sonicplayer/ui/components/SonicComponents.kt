@@ -40,11 +40,9 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sonicplayer.R
@@ -108,12 +106,12 @@ fun SonicTopBar(
 }
 
 @Composable
-fun GoldDivider(modifier: Modifier = Modifier) {
+fun SonicDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(0.5.dp)
-            .background(Color(0xFF232323))
+            .background(MaterialTheme.colorScheme.outlineVariant)
     )
 }
 
@@ -158,14 +156,13 @@ fun PlayPauseIcon(
     )
 }
 
-/** Square album artwork with a plain placeholder. */
+/** Square album artwork with a quiet, theme-matched fallback. */
 @Composable
 fun AlbumArt(
     artwork: Any?,
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
-    shape: Shape = RoundedCornerShape(4.dp),
-    noteSize: Int = 24
+    shape: Shape = RoundedCornerShape(4.dp)
 ) {
     val context = LocalContext.current
     Box(
@@ -174,21 +171,14 @@ fun AlbumArt(
             .background(SurfaceVariantDark),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "♪",
-            color = TextTertiary,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Normal,
-            fontSize = noteSize.sp
-        )
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(artwork)
                 .size(512)
                 .crossfade(120)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
-                .fallback(R.drawable.placeholder)
+                .placeholder(R.drawable.ic_placeholder)
+                .error(R.drawable.ic_placeholder)
+                .fallback(R.drawable.ic_placeholder)
                 .build(),
             contentDescription = contentDescription,
             modifier = Modifier.fillMaxSize(),
@@ -219,8 +209,7 @@ fun SongRow(
             artwork = artwork,
             contentDescription = song.album,
             modifier = Modifier.size(46.dp),
-            shape = RoundedCornerShape(3.dp),
-            noteSize = 18
+            shape = RoundedCornerShape(3.dp)
         )
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -230,7 +219,7 @@ fun SongRow(
                 Text(
                     text = song.displayTitle,
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (isPlaying) Gold else TextPrimary,
+                    color = TextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)

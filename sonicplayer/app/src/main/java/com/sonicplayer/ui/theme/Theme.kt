@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -16,15 +17,15 @@ private val BlackGoldScheme = darkColorScheme(
     onPrimaryContainer = GoldPale,
     inversePrimary = GoldDark,
 
-    secondary = GoldLight,
+    secondary = GoldMuted,
     onSecondary = Ink,
     secondaryContainer = SurfaceHighDark,
-    onSecondaryContainer = GoldLight,
+    onSecondaryContainer = TextPrimary,
 
     tertiary = GoldMuted,
     onTertiary = Ink,
     tertiaryContainer = SurfaceVariantDark,
-    onTertiaryContainer = GoldMuted,
+    onTertiaryContainer = TextPrimary,
 
     background = Ink,
     onBackground = TextPrimary,
@@ -33,7 +34,7 @@ private val BlackGoldScheme = darkColorScheme(
     onSurface = TextPrimary,
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = TextSecondary,
-    surfaceTint = Gold,
+    surfaceTint = Color.Transparent,
     surfaceBright = SurfaceHighDark,
     surfaceDim = InkSoft,
     surfaceContainer = SurfaceVariantDark,

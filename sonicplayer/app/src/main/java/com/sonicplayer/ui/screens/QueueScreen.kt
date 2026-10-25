@@ -51,7 +51,7 @@ import com.sonicplayer.data.model.MusicQueue
 import com.sonicplayer.data.model.Song
 import com.sonicplayer.ui.components.AlbumArt
 import com.sonicplayer.ui.components.EmptyState
-import com.sonicplayer.ui.components.GoldDivider
+import com.sonicplayer.ui.components.SonicDivider
 import com.sonicplayer.ui.components.PlayingIndicator
 import com.sonicplayer.ui.components.QueueNameDialog
 import com.sonicplayer.ui.components.QueuePickerSheet
@@ -109,7 +109,7 @@ fun QueueScreen(
                 onClear = { showClearDialog = true }
             )
 
-            GoldDivider()
+            SonicDivider()
 
             if (songs.isEmpty()) {
                 EmptyState(
@@ -345,22 +345,21 @@ private fun QueueRow(
             artwork = song.artworkUri,
             contentDescription = song.album,
             modifier = Modifier.size(44.dp),
-            shape = RoundedCornerShape(2.dp),
-            noteSize = 18
+            shape = RoundedCornerShape(2.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.displayTitle,
                 style = MaterialTheme.typography.titleSmall,
-                color = if (isCurrent) Gold else TextPrimary,
+                color = TextPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = song.displayArtist,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (isCurrent) Gold.copy(alpha = 0.8f) else TextSecondary,
+                color = TextSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

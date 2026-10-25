@@ -2,34 +2,34 @@ package com.sonicplayer.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── Gold palette ─────────────────────────────────────────────────────────────
-val Gold = Color(0xFFD4AF37)
-val GoldLight = Color(0xFFF5D76E)
-val GoldPale = Color(0xFFFFF1C2)
-val GoldDark = Color(0xFF9C7A1E)
-val GoldDeep = Color(0xFF6B5210)
-val GoldMuted = Color(0xFFBFA45C)
+// ── Muted antique gold ───────────────────────────────────────────────────────
+val Gold = Color(0xFFC2A36B)
+val GoldLight = Color(0xFFD9C08C)
+val GoldPale = Color(0xFFEFE4CC)
+val GoldDark = Color(0xFF8C7448)
+val GoldDeep = Color(0xFF58492C)
+val GoldMuted = Color(0xFFA18D69)
 
-// ── Ink palette ──────────────────────────────────────────────────────────────
-val Ink = Color(0xFF070707)
-val InkSoft = Color(0xFF0D0D0D)
-val SurfaceDark = Color(0xFF121212)
-val SurfaceVariantDark = Color(0xFF1B1915)
-val SurfaceElevatedDark = Color(0xFF232019)
-val SurfaceHighDark = Color(0xFF2C2820)
-val BorderGold = Color(0xFF3A3222)
-val BorderGoldSoft = Color(0xFF272218)
+// ── Neutral graphite palette ─────────────────────────────────────────────────
+val Ink = Color(0xFF0A0A0B)
+val InkSoft = Color(0xFF0F0F11)
+val SurfaceDark = Color(0xFF141416)
+val SurfaceVariantDark = Color(0xFF1B1B1F)
+val SurfaceElevatedDark = Color(0xFF232327)
+val SurfaceHighDark = Color(0xFF2B2B30)
+val BorderGold = Color(0xFF302E29)
+val BorderGoldSoft = Color(0xFF232220)
 
 // ── Type ─────────────────────────────────────────────────────────────────────
-val TextPrimary = Color(0xFFF6F1E3)
-val TextSecondary = Color(0xFFB9B09D)
-val TextTertiary = Color(0xFF827A6A)
+val TextPrimary = Color(0xFFE9E6DF)
+val TextSecondary = Color(0xFFA7A39B)
+val TextTertiary = Color(0xFF706C66)
 
 // ── Feedback ─────────────────────────────────────────────────────────────────
-val Error = Color(0xFFE05A5A)
-val Success = Color(0xFF7BCB97)
-val Warning = Color(0xFFE0B15A)
-val Info = Color(0xFF7FA6C9)
+val Error = Color(0xFFCF6A6A)
+val Success = Color(0xFF7FB894)
+val Warning = Color(0xFFC9A36A)
+val Info = Color(0xFF86A6BF)
 
 // ── Legacy aliases kept for compatibility ────────────────────────────────────
 val Primary = Gold

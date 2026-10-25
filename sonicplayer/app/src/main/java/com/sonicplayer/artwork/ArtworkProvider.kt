@@ -7,6 +7,7 @@ import android.content.Context
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
@@ -14,6 +15,7 @@ import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.util.LruCache
 import android.util.Size
+import androidx.core.content.ContextCompat
 import com.sonicplayer.R
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -24,7 +26,8 @@ import kotlin.concurrent.thread
  *
  * Both Coil (UI thumbnails) and Media3 (notification large icon) can read this provider,
  * so the same bounded-size image is used everywhere. When a track has no artwork the
- * bundled [R.drawable.placeholder] image is returned instead of an error.
+ * bundled [R.drawable.ic_placeholder] image is returned instead of an error. Callers that
+ * need to distinguish real artwork from the fallback can request a raw URI.
  */
 class ArtworkProvider : ContentProvider() {
 
@@ -79,7 +82,12 @@ class ArtworkProvider : ContentProvider() {
 
         val appContext = context ?: return ByteArray(0)
         val bitmap = runCatching { resolveBitmap(appContext, uri) }.getOrNull()
-        val bytes = if (bitmap != null) compress(bitmap) else placeholderBytes(appContext)
+        val rawOnly = uri.getQueryParameter(RAW_PARAM) == "1"
+        val bytes = when {
+            bitmap != null -> compress(bitmap)
+            rawOnly -> ByteArray(0)
+            else -> placeholderBytes(appContext)
+        }
         if (bytes.isNotEmpty()) cache.put(key, bytes)
         return bytes
     }
@@ -87,8 +95,14 @@ class ArtworkProvider : ContentProvider() {
     private fun placeholderBytes(context: Context): ByteArray {
         cache.get(PLACEHOLDER_KEY)?.let { return it }
         val bytes = runCatching {
-            BitmapFactory.decodeResource(context.resources, R.drawable.placeholder)
-                ?.let { compress(it) }
+            val size = 512
+            val drawable = ContextCompat.getDrawable(context, R.drawable.ic_placeholder)
+                ?: return ByteArray(0)
+            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, size, size)
+            drawable.draw(canvas)
+            compress(bitmap)
         }.getOrNull() ?: ByteArray(0)
         if (bytes.isNotEmpty()) cache.put(PLACEHOLDER_KEY, bytes)
         return bytes
@@ -325,8 +339,14 @@ class ArtworkProvider : ContentProvider() {
         private const val MAX_ART_SIZE = 640
         private const val CACHE_BYTES = 12 * 1024 * 1024
         private const val PLACEHOLDER_KEY = "asset://placeholder"
+        private const val RAW_PARAM = "raw"
 
         fun songUri(songId: Long): Uri = Uri.parse("content://$AUTHORITY/song/$songId")
+
+        /** Same as [songUri], but empty when the track has no real artwork. */
+        fun rawSongUri(songId: Long): Uri = songUri(songId).buildUpon()
+            .appendQueryParameter(RAW_PARAM, "1")
+            .build()
 
         fun albumUri(albumId: Long): Uri = Uri.parse("content://$AUTHORITY/album/$albumId")
 

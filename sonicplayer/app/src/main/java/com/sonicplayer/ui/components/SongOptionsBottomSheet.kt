@@ -98,8 +98,7 @@ fun SongOptionsBottomSheet(
                     artwork = song.artworkUri,
                     contentDescription = song.album,
                     modifier = Modifier.size(48.dp),
-                    shape = RoundedCornerShape(2.dp),
-                    noteSize = 18
+                    shape = RoundedCornerShape(2.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -120,7 +119,7 @@ fun SongOptionsBottomSheet(
                 }
             }
 
-            GoldDivider()
+            SonicDivider()
 
             if (showQueueChoices) {
                 SheetRow(
