@@ -605,7 +605,11 @@ class PlaybackRepository @Inject constructor(
                 val queue = ensureActiveQueueLocked()
                 val controller = awaitController()
                 val loaded = loadedQueueId == queue.id && controller != null
-                val after = if (loaded) controller.currentMediaItemIndex.coerceAtLeast(0) else queue.lastPosition
+                val after = if (loaded && controller != null) {
+                    controller.currentMediaItemIndex.coerceAtLeast(0)
+                } else {
+                    queue.lastPosition
+                }
 
                 queueDao.addNextToQueue(
                     queueId = queue.id,
@@ -614,7 +618,7 @@ class PlaybackRepository @Inject constructor(
                     timestamp = System.currentTimeMillis()
                 )
 
-                if (loaded) {
+                if (loaded && controller != null) {
                     runCatching {
                         val target = (after + 1).coerceIn(0, controller.mediaItemCount)
                         controller.addMediaItem(target, song.toMediaItem())
@@ -639,7 +643,7 @@ class PlaybackRepository @Inject constructor(
 
                 queueDao.removeItemAt(queue.id, position, System.currentTimeMillis())
 
-                if (loaded) {
+                if (loaded && controller != null) {
                     suppressPositionPersistence = true
                     runCatching {
                         if (position in 0 until controller.mediaItemCount) {
@@ -675,7 +679,7 @@ class PlaybackRepository @Inject constructor(
 
                 queueDao.moveItem(queue.id, fromPosition, toPosition, System.currentTimeMillis())
 
-                if (loaded) {
+                if (loaded && controller != null) {
                     suppressPositionPersistence = true
                     runCatching { controller.moveMediaItem(fromPosition, toPosition) }
                     suppressPositionPersistence = false
