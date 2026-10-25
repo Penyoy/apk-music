@@ -2,6 +2,7 @@ package com.sonicplayer.di
 
 import android.content.Context
 import androidx.room.Room
+import com.sonicplayer.data.database.MIGRATION_1_2
 import com.sonicplayer.data.database.SonicDatabase
 import com.sonicplayer.data.dao.SongDao
 import com.sonicplayer.data.dao.PlaylistDao
@@ -27,6 +28,7 @@ object AppModule {
             SonicDatabase::class.java,
             "sonic_database"
         )
+        .addMigrations(MIGRATION_1_2)
         .fallbackToDestructiveMigration()
         .build()
     }

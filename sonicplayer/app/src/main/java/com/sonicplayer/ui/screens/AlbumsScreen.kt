@@ -218,6 +218,8 @@ fun AlbumDetailScreen(
     val playbackState by viewModel.playbackState.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
+    val queues by viewModel.queues.collectAsState()
+    val activeQueue by viewModel.activeQueue.collectAsState()
 
     var selectedSong by remember { mutableStateOf<Song?>(null) }
     var showOptions by remember { mutableStateOf(false) }
@@ -350,13 +352,21 @@ fun AlbumDetailScreen(
         val song = selectedSong!!
         SongOptionsBottomSheet(
             song = song,
+            queues = queues,
+            activeQueueId = activeQueue?.id,
             onDismiss = { showOptions = false },
             onPlayNext = {
                 viewModel.addNext(song)
                 showOptions = false
             },
-            onAddToQueue = {
-                viewModel.addToQueue(song)
+            onAddToQueue = { queueId ->
+                viewModel.addToQueue(song, queueId)
+                showOptions = false
+            },
+            onCreateQueue = { name ->
+                viewModel.createQueue(name) { queueId ->
+                    viewModel.addToQueue(song, queueId)
+                }
                 showOptions = false
             },
             onAddToPlaylist = {

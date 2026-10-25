@@ -228,6 +228,8 @@ fun ArtistDetailScreen(
     val playbackState by viewModel.playbackState.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
+    val queues by viewModel.queues.collectAsState()
+    val activeQueue by viewModel.activeQueue.collectAsState()
     val artists by viewModel.artists.collectAsState()
     val artist = artists.find { it.name == resolvedName }
 
@@ -361,13 +363,21 @@ fun ArtistDetailScreen(
         val song = selectedSong!!
         SongOptionsBottomSheet(
             song = song,
+            queues = queues,
+            activeQueueId = activeQueue?.id,
             onDismiss = { showOptions = false },
             onPlayNext = {
                 viewModel.addNext(song)
                 showOptions = false
             },
-            onAddToQueue = {
-                viewModel.addToQueue(song)
+            onAddToQueue = { queueId ->
+                viewModel.addToQueue(song, queueId)
+                showOptions = false
+            },
+            onCreateQueue = { name ->
+                viewModel.createQueue(name) { queueId ->
+                    viewModel.addToQueue(song, queueId)
+                }
                 showOptions = false
             },
             onAddToPlaylist = {

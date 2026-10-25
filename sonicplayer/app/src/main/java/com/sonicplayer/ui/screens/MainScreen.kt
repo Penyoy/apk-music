@@ -288,6 +288,7 @@ fun MainScreen(
                         PlaylistDetailScreen(playlistId, navController, viewModel)
                     }
                     composable("favorites") { FavoritesScreen(navController, viewModel) }
+                    composable("queue") { QueueScreen(navController, viewModel) }
                     composable("now_playing") { NowPlayingScreen(navController, viewModel) }
                     composable("equalizer") { EqualizerScreen(navController, viewModel) }
                     composable("sleep_timer") { SleepTimerScreen(navController, viewModel) }

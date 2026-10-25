@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shuffle
@@ -88,6 +89,8 @@ fun SongsScreen(
     val playbackState by viewModel.playbackState.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
+    val queues by viewModel.queues.collectAsState()
+    val activeQueue by viewModel.activeQueue.collectAsState()
     val sortBy by viewModel.sortBy.collectAsState()
     val listState = rememberLazyListState()
 
@@ -107,6 +110,9 @@ fun SongsScreen(
                 title = "Lagu",
                 subtitle = "Perpustakaan"
             ) {
+                IconButton(onClick = { navController.navigate("queue") }) {
+                    Icon(Icons.Filled.QueueMusic, contentDescription = "Antrean")
+                }
                 IconButton(onClick = { navController.navigate("search") }) {
                     Icon(Icons.Filled.Search, contentDescription = "Cari")
                 }
@@ -220,13 +226,21 @@ fun SongsScreen(
         val song = selectedSong!!
         SongOptionsBottomSheet(
             song = song,
+            queues = queues,
+            activeQueueId = activeQueue?.id,
             onDismiss = { showOptions = false },
             onPlayNext = {
                 viewModel.addNext(song)
                 showOptions = false
             },
-            onAddToQueue = {
-                viewModel.addToQueue(song)
+            onAddToQueue = { queueId ->
+                viewModel.addToQueue(song, queueId)
+                showOptions = false
+            },
+            onCreateQueue = { name ->
+                viewModel.createQueue(name) { queueId ->
+                    viewModel.addToQueue(song, queueId)
+                }
                 showOptions = false
             },
             onAddToPlaylist = {

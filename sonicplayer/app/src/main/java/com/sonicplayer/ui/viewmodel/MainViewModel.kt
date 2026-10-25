@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.sonicplayer.data.model.Album
 import com.sonicplayer.data.model.Artist
 import com.sonicplayer.data.model.Lyrics
+import com.sonicplayer.data.model.MusicQueue
 import com.sonicplayer.data.model.PlaybackState
 import com.sonicplayer.data.model.Playlist
 import com.sonicplayer.data.model.Song
@@ -71,9 +72,15 @@ class MainViewModel @Inject constructor(
     val mostPlayed: StateFlow<List<Song>> = audioRepository.getMostPlayedSongs()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val notPlayed: StateFlow<List<Song>> = songs
+        .map { list -> list.filter { it.lastPlayed == 0L }.sortedBy { it.title.lowercase() } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     // Playback
     val playbackState: StateFlow<PlaybackState> = playbackRepository.playbackState
     val currentPlaylist: StateFlow<List<Song>> = playbackRepository.currentPlaylist
+    val queues: StateFlow<List<MusicQueue>> = playbackRepository.queues
+    val activeQueue: StateFlow<MusicQueue?> = playbackRepository.activeQueue
 
     /** Lyrics for the current track, loaded lazily when the track changes. */
     val currentLyrics: StateFlow<Lyrics?> = playbackState
@@ -174,11 +181,36 @@ class MainViewModel @Inject constructor(
     fun next() = playbackRepository.next()
     fun previous() = playbackRepository.previous()
     fun seekTo(position: Long) = playbackRepository.seekTo(position)
+    fun seekBy(delta: Long) = playbackRepository.seekBy(delta)
     fun toggleRepeatMode() = playbackRepository.toggleRepeatMode()
     fun toggleShuffleMode() = playbackRepository.toggleShuffleMode()
     fun setPlaybackSpeed(speed: Float) = playbackRepository.setPlaybackSpeed(speed)
-    fun addToQueue(song: Song) = playbackRepository.addToQueue(song)
+    fun addToQueue(song: Song, queueId: Long? = null) =
+        playbackRepository.addToQueue(song, queueId)
     fun addNext(song: Song) = playbackRepository.addNext(song)
+
+    // Queues
+    fun createQueue(
+        name: String,
+        songIds: List<Long> = emptyList(),
+        onCreated: ((Long) -> Unit)? = null
+    ) = playbackRepository.createQueue(name, songIds, onCreated = onCreated)
+
+    fun switchQueue(queueId: Long) = playbackRepository.switchQueue(queueId)
+    fun renameQueue(queueId: Long, name: String) =
+        playbackRepository.renameQueue(queueId, name)
+    fun deleteQueue(queueId: Long) = playbackRepository.deleteQueue(queueId)
+    fun clearActiveQueue() = playbackRepository.clearActiveQueue()
+    fun removeQueueItem(position: Int) = playbackRepository.removeQueueItem(position)
+    fun moveQueueItem(fromPosition: Int, toPosition: Int) =
+        playbackRepository.moveQueueItem(fromPosition, toPosition)
+
+    fun playQueueItem(position: Int) {
+        playbackRepository.seekToQueueItem(position)
+        currentPlaylist.value.getOrNull(position)?.let { song ->
+            viewModelScope.launch { audioRepository.recordPlay(song.id) }
+        }
+    }
 
     // Favorites
     fun toggleFavorite(songId: Long) {

@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.sonicplayer.data.model.Song
 import com.sonicplayer.data.model.Playlist
 import com.sonicplayer.data.model.PlaylistSong
+import com.sonicplayer.data.model.MusicQueue
 import com.sonicplayer.data.model.QueueItem
 import com.sonicplayer.data.model.Favorite
 import com.sonicplayer.data.model.RecentlyPlayed
@@ -20,11 +21,12 @@ import com.sonicplayer.data.dao.RecentlyPlayedDao
         Song::class,
         Playlist::class,
         PlaylistSong::class,
+        MusicQueue::class,
         QueueItem::class,
         Favorite::class,
         RecentlyPlayed::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

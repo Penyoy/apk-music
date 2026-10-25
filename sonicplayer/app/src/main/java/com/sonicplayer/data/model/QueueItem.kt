@@ -2,17 +2,30 @@ package com.sonicplayer.data.model
 
 import android.os.Parcelable
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-@Entity(tableName = "queue")
+@Entity(
+    tableName = "queue",
+    foreignKeys = [
+        ForeignKey(
+            entity = MusicQueue::class,
+            parentColumns = ["id"],
+            childColumns = ["queueId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("queueId")]
+)
 data class QueueItem(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val queueId: Long,
     val songId: Long,
-    val position: Int = 0,
-    val isCurrent: Boolean = false
+    val position: Int = 0
 ) : Parcelable
 
 @Parcelize
@@ -35,6 +48,7 @@ data class RecentlyPlayed(
 data class PlaybackState(
     val isPlaying: Boolean = false,
     val currentSong: Song? = null,
+    val currentIndex: Int = 0,
     val position: Long = 0,
     val duration: Long = 0,
     val repeatMode: Int = REPEAT_MODE_OFF,
@@ -48,13 +62,13 @@ data class PlaybackState(
         const val REPEAT_MODE_ALL = 1
         const val REPEAT_MODE_ONE = 2
     }
-    
+
     val progress: Float
         get() = if (duration > 0) position.toFloat() / duration else 0f
-    
+
     val positionText: String
         get() = Song.formatDuration(position)
-    
+
     val durationText: String
         get() = Song.formatDuration(duration)
 }
