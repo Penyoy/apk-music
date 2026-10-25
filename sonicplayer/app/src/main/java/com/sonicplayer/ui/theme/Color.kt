@@ -23,7 +23,7 @@ val BorderGoldSoft = Color(0xFF232220)
 // ── Type ─────────────────────────────────────────────────────────────────────
 val TextPrimary = Color(0xFFE9E6DF)
 val TextSecondary = Color(0xFFA7A39B)
-val TextTertiary = Color(0xFF706C66)
+val TextTertiary = Color(0xFF827E76)
 
 // ── Feedback ─────────────────────────────────────────────────────────────────
 val Error = Color(0xFFCF6A6A)
