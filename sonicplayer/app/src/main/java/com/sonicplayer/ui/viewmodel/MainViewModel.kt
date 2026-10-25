@@ -116,7 +116,7 @@ class MainViewModel @Inject constructor(
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            LyricsUiState.Unavailable
+            LyricsUiState.Loading
         )
 
     val sleepTimerManager = SleepTimerManager()

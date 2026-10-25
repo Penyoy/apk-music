@@ -577,6 +577,7 @@ private fun LyricsPreview(
     var follow by remember(lyrics) { mutableStateOf(true) }
 
     LaunchedEffect(lyrics) {
+        if (lyrics.lines.isNotEmpty()) listState.scrollToItem(0)
         follow = true
     }
 

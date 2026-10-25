@@ -1,6 +1,8 @@
 package com.sonicplayer.ui.components
 
 import android.graphics.Bitmap
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -42,6 +44,11 @@ fun AmbientArtwork(
 ) {
     val context = LocalContext.current
     var blurred by remember(artwork) { mutableStateOf<ImageBitmap?>(null) }
+    val ambientAlpha by animateFloatAsState(
+        targetValue = if (blurred != null) 0.42f else 0f,
+        animationSpec = tween(durationMillis = 500),
+        label = "ambientAlpha"
+    )
 
     LaunchedEffect(artwork) {
         blurred = null
@@ -69,7 +76,7 @@ fun AmbientArtwork(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
-                    .alpha(0.42f),
+                    .alpha(ambientAlpha),
                 contentScale = ContentScale.Crop,
                 colorFilter = ColorFilter.colorMatrix(
                     ColorMatrix().apply { setToSaturation(0.42f) }
